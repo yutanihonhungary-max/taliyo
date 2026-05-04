@@ -178,6 +178,17 @@ textarea.inp{min-height:60px;resize:vertical;line-height:1.4}
 .srow{display:flex;align-items:center;gap:9px;padding:11px;background:#0c0c18;border-radius:8px;border:none;color:#e8e8ed;text-align:left;width:100%;font-size:12px;margin-bottom:3px}
 .srow svg{width:15px;height:15px;color:#5a5a6a;flex-shrink:0}
 .srow.danger{color:#ff6b6b}.srow.danger svg{color:#ff6b6b}
+/* Sync */
+.sync-box{margin-bottom:12px;padding:14px;background:#0c0c18;border-radius:10px;border:1px solid rgba(108,92,231,.2)}
+.sync-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;margin-bottom:10px}
+.sync-title svg{width:18px;height:18px;color:#6c5ce7}
+.sync-url{width:100%;padding:9px 10px;background:#141428;border:1px solid rgba(255,255,255,.06);border-radius:7px;color:#e8e8ed;font-size:11px;font-family:monospace;margin-bottom:8px}
+.sync-url:focus{outline:none;border-color:#6c5ce7}
+.sync-btns{display:flex;gap:6px}.sync-btns .btn{flex:1;padding:9px;font-size:12px}
+.sync-status{font-size:10px;color:#6a6a7a;margin-top:8px;text-align:center;line-height:1.5}
+.sync-status strong{color:#8b8ba3}
+.sync-spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(108,92,231,.2);border-top-color:#6c5ce7;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* Category colors */
 .cc0{background:rgba(129,140,248,.14);color:#a5b4fc}
@@ -237,6 +248,16 @@ textarea.inp{min-height:60px;resize:vertical;line-height:1.4}
 <!-- Settings modal -->
 <div class="mbg" id="m-set" onclick="closeM(event,'m-set')"><div class="mdl" onclick="event.stopPropagation()">
 <div class="mdl-h"></div><h3 class="mdl-t">設定</h3>
+<div class="sync-box">
+  <div class="sync-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Googleスプレッドシート同期</div>
+  <input class="sync-url" id="sync-url" placeholder="Apps ScriptのウェブアプリURLを貼り付け" value="">
+  <div class="sync-btns">
+    <button class="btn bp" onclick="syncPush()" id="sync-push">送信</button>
+    <button class="btn bs" onclick="syncPull()" id="sync-pull">受信</button>
+  </div>
+  <div class="sync-status" id="sync-status"></div>
+  <button class="btn bs" onclick="saveSyncUrl()" style="margin-top:6px;padding:7px;font-size:11px">URL保存</button>
+</div>
 <button class="srow" onclick="loadTpl()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><div><div>宅建業法テンプレート</div><div style="font-size:10px;color:#5a5a6a;margin-top:1px">15項目を一括追加</div></div></button>
 <button class="srow" onclick="expData()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>エクスポート</button>
 <button class="srow" onclick="document.getElementById('impf').click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>インポート</button>
@@ -594,7 +615,63 @@ function saveMemo(){
 // ═══ Modals ═══
 function showM(id){$(id).classList.add('show');document.body.style.overflow='hidden'}
 function closeM(e,id){if(e&&e.target!==e.currentTarget)return;$(id).classList.remove('show');document.body.style.overflow=''}
-function openSettings(){showM('m-set')}
+function openSettings(){
+  const url=localStorage.getItem('taliyo-sync-url')||'';
+  $('sync-url').value=url;
+  $('sync-status').innerHTML=url?'URL設定済み':'URLを設定してください（下の手順を参照）';
+  showM('m-set');
+}
+
+// ═══ Google Sheets Sync ═══
+function saveSyncUrl(){
+  const url=$('sync-url').value.trim();
+  if(url){localStorage.setItem('taliyo-sync-url',url);$('sync-status').innerHTML='URL保存しました'}
+  else{localStorage.removeItem('taliyo-sync-url');$('sync-status').innerHTML='URLをクリアしました'}
+}
+function getSyncUrl(){
+  const url=$('sync-url').value.trim()||localStorage.getItem('taliyo-sync-url')||'';
+  if(!url){$('sync-status').innerHTML='<span style="color:#ff6b6b">URLを入力してください</span>';return null}
+  return url;
+}
+async function syncPush(){
+  const url=getSyncUrl();if(!url)return;
+  const btn=$('sync-push');btn.disabled=true;btn.innerHTML='<span class="sync-spinner"></span>送信中';
+  try{
+    // GAS redirects POST, use no-cors to avoid CORS issues
+    await fetch(url,{method:'POST',mode:'no-cors',body:JSON.stringify(S)});
+    localStorage.setItem('taliyo-sync-url',$('sync-url').value.trim());
+    $('sync-status').innerHTML=`送信完了 · <strong>${new Date().toLocaleTimeString('ja-JP')}</strong>`;
+  }catch(e){
+    $('sync-status').innerHTML=`<span style="color:#ff6b6b">送信失敗: ${e.message}</span>`;
+  }
+  btn.disabled=false;btn.innerHTML='送信';
+}
+async function syncPull(){
+  const url=getSyncUrl();if(!url)return;
+  const btn=$('sync-pull');btn.disabled=true;btn.innerHTML='<span class="sync-spinner"></span>受信中';
+  try{
+    // GAS GET redirects to googleusercontent.com which returns JSON with CORS headers
+    const res=await fetch(url,{redirect:'follow'});
+    const text=await res.text();
+    let d;
+    try{d=JSON.parse(text)}catch{
+      // If redirect caused HTML response, try extracting JSON
+      const m=text.match(/\{[\s\S]*\}/);
+      if(m)d=JSON.parse(m[0]);else throw new Error('データ形式が不正です');
+    }
+    if(d.error)throw new Error(d.error);
+    if(!d.categories&&!d.items)throw new Error('データが空です');
+    commit('スプレッドシートから受信');
+    S={categories:d.categories||[],items:d.items||[]};
+    migrate();save();
+    localStorage.setItem('taliyo-sync-url',$('sync-url').value.trim());
+    $('sync-status').innerHTML=`受信完了 · ${S.items.length}項目 · <strong>${new Date().toLocaleTimeString('ja-JP')}</strong>`;
+    render();
+  }catch(e){
+    $('sync-status').innerHTML=`<span style="color:#ff6b6b">受信失敗: ${e.message}</span>`;
+  }
+  btn.disabled=false;btn.innerHTML='受信';
+}
 
 // ═══ Settings ═══
 const TPL=['1：宅地建物取引業の意味','2：免許制度','3：免許基準','4：宅地建物取引業者の手続き','5：宅地建物取引士制度','6：営業保証金','7：弁済業務保証金(保証協会)','8：取引の諸規定','9：媒介契約の規制','10：重要事項の説明','11：37条書面','12：8種規制','13：報酬','14：監督・罰則','15：住宅瑕疵担保履行法'];
