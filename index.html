@@ -180,6 +180,14 @@ textarea.inp{min-height:60px;resize:vertical;line-height:1.4}
 .srow.danger{color:#ff6b6b}.srow.danger svg{color:#ff6b6b}
 /* Sync */
 .sync-box{margin-bottom:12px;padding:14px;background:#0c0c18;border-radius:10px;border:1px solid rgba(108,92,231,.2)}
+/* Mode toggle */
+.mode-box{margin-bottom:12px;padding:14px;background:#0c0c18;border-radius:10px;border:1px solid rgba(255,255,255,.06)}
+.mode-title{font-size:12px;font-weight:700;color:#8b8ba3;margin-bottom:8px}
+.mode-btns{display:flex;gap:4px}
+.mode-btn{flex:1;padding:10px 6px;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);color:#6a6a7a;font-size:11px;font-weight:600;text-align:center;line-height:1.4}
+.mode-btn.on{background:rgba(108,92,231,.18);border-color:rgba(108,92,231,.4);color:#c4b5fd}
+.mode-btn span{display:block;font-size:9px;font-weight:400;color:#5a5a6a;margin-top:2px}
+.mode-btn.on span{color:#8b8ba3}
 .sync-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;margin-bottom:10px}
 .sync-title svg{width:18px;height:18px;color:#6c5ce7}
 .sync-url{width:100%;padding:9px 10px;background:#141428;border:1px solid rgba(255,255,255,.06);border-radius:7px;color:#e8e8ed;font-size:11px;font-family:monospace;margin-bottom:8px}
@@ -236,6 +244,7 @@ textarea.inp{min-height:60px;resize:vertical;line-height:1.4}
 <div class="mbg" id="m-det" onclick="closeM(event,'m-det')"><div class="mdl" onclick="event.stopPropagation()">
 <div class="mdl-h"></div><h3 class="mdl-t" id="d-title">詳細</h3>
 <div class="fld"><label class="fl">カテゴリー</label><select class="sel" id="d-cat"></select></div>
+<div class="fld" id="d-ncf" style="display:none"><label class="fl">新しいカテゴリー名</label><input class="inp" id="d-nc" placeholder="例: 宅建業法" maxlength="20"></div>
 <div class="fld"><label class="fl">項目名</label><input class="inp" id="d-nm" maxlength="60"></div>
 <div class="fld"><label class="fl">学習日</label><input class="inp" id="d-dt" type="date"></div>
 <div class="fld"><label class="fl">メモ</label><textarea class="inp" id="d-memo" placeholder="メモ"></textarea></div>
@@ -257,6 +266,13 @@ textarea.inp{min-height:60px;resize:vertical;line-height:1.4}
   </div>
   <div class="sync-status" id="sync-status"></div>
   <button class="btn bs" onclick="saveSyncUrl()" style="margin-top:6px;padding:7px;font-size:11px">URL保存</button>
+</div>
+<div class="mode-box">
+  <div class="mode-title">スケジュールモード</div>
+  <div class="mode-btns">
+    <button class="mode-btn" id="mode-fixed" onclick="setMode('fixed')">固定式<span>日程は変わらない</span></button>
+    <button class="mode-btn" id="mode-shift" onclick="setMode('shift')">後ろずらし式<span>実際にやった日基準</span></button>
+  </div>
 </div>
 <button class="srow" onclick="loadTpl()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><div><div>宅建業法テンプレート</div><div style="font-size:10px;color:#5a5a6a;margin-top:1px">15項目を一括追加</div></div></button>
 <button class="srow" onclick="expData()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>エクスポート</button>
@@ -285,23 +301,22 @@ textarea.inp{min-height:60px;resize:vertical;line-height:1.4}
 'use strict';
 const INTERVALS=[0,.5,1,1,1,2,2,3,3,4,4,5,5,6,6,7];
 const CUM=[];{let s=0;for(const v of INTERVALS){s+=v;CUM.push(Math.ceil(s))}}
-const COL_LABEL=['初日','初日②','+1','+1','+1','+2','+2','+3','+3','+4','+4','+5','+5','+6','+6','+7'];
+const GAPS=CUM.map((v,i)=>i===0?0:CUM[i]-CUM[i-1]);
 const RECURRING_GAP=14;
+const COL_LABEL=['初日','初日②','+1','+1','+1','+2','+2','+3','+3','+4','+4','+5','+5','+6','+6','+7'];
 const CC=['cc0','cc1','cc2','cc3','cc4','cc5','cc6'];
 const SK='taliyo-v3';
+const MODE_KEY='taliyo-mode'; // 'fixed' or 'shift'
 let S={categories:[],items:[]};
-let curView='table',curCat='__all__',detId=null;
+let schedMode=localStorage.getItem(MODE_KEY)||'fixed';
+let curView='table',curCat='__all__',detId=null,memoItemId=null;
 
-// ═══ Undo (right-top button only, up to 50) ═══
+// ═══ Undo (up to 50) ═══
 const HMAX=50;let hist=[];
 function pushH(label){hist.push({label,snap:JSON.stringify(S)});if(hist.length>HMAX)hist.shift();updateUndoUI()}
 function undoOne(){if(!hist.length)return;S=JSON.parse(hist.pop().snap);save(true);updateUndoUI();render()}
 function clearHistory(){hist=[];updateUndoUI()}
-function updateUndoUI(){
-  const n=hist.length;
-  $('undo-btn').style.display=n?'flex':'none';
-  $('undo-btn').classList.toggle('undo-on',n>0);
-}
+function updateUndoUI(){const n=hist.length;$('undo-btn').style.display=n?'flex':'none';$('undo-btn').classList.toggle('undo-on',n>0)}
 
 // ═══ Helpers ═══
 const $=id=>document.getElementById(id);
@@ -314,49 +329,101 @@ function fDow(ds){return['日','月','火','水','木','金','土'][new Date(ds+
 function fFull(ds){return`${new Date(ds+'T00:00:00').getMonth()+1}月${new Date(ds+'T00:00:00').getDate()}日 (${fDow(ds)})`}
 function catById(id){return S.categories.find(c=>c.id===id)}
 function catCC(cat){return cat?cat.cc:CC[0]}
-function load(){try{const r=localStorage.getItem(SK);if(r)S=JSON.parse(r);migrate()}catch(e){}}
+function load(){try{const r=localStorage.getItem(SK);if(r)S=JSON.parse(r);ensureFields()}catch(e){}}
 function save(){try{localStorage.setItem(SK,JSON.stringify(S))}catch(e){}}
 function commit(label){pushH(label);save()}
 function render(){if(curView==='table')renderTable();if(curView==='today')renderToday();if(curView==='stats')renderStats()}
+function ensureFields(){for(const it of S.items){if(!it.doneDates)it.doneDates=[];if(!it.completions)it.completions=[];delete it.doneDate}}
 
-// ═══ Migrate completions → doneDates (revert from shift-back) ═══
-function migrate(){
-  for(const it of S.items){
-    if(!it.doneDates) it.doneDates=[];
-    // If has completions (from shift-back version), convert back
-    if(it.completions && it.completions.length && !it.doneDates.length){
-      const dates=CUM.map(off=>addD(it.learnDate,off));
-      for(const c of it.completions){
-        if(c.step<16) it.doneDates.push(dates[c.step]);
-      }
-    }
-    delete it.completions;
-  }
-}
+// ═══════════════════════════════════════════════
+//  DUAL-MODE SCHEDULE ENGINE
+// ═══════════════════════════════════════════════
 
-// ═══ Schedule (FIXED — dates never shift) ═══
-function revDates(item){
-  return CUM.map((off,i)=>({date:addD(item.learnDate,off),idx:i}));
+// --- FIXED MODE: dates from learnDate + CUM offsets, never shift ---
+function getSchedFixed(item){
+  return CUM.map((off,i)=>({step:i, label:COL_LABEL[i], date:addD(item.learnDate,off), done:item.doneDates.includes(addD(item.learnDate,off)), projected:false}));
 }
-function revDatesAll(item){
-  // 16 initial + recurring 14-day
+function getSchedFixedAll(item){
   const dates=CUM.map(off=>addD(item.learnDate,off));
-  let n=CUM[15]+RECURRING_GAP;
-  const limit=365*3;
-  while(n<=limit){dates.push(addD(item.learnDate,n));n+=RECURRING_GAP}
-  return dates;
+  let n=CUM[15]+RECURRING_GAP;while(n<=365*3){dates.push(addD(item.learnDate,n));n+=RECURRING_GAP}
+  return dates.map((d,i)=>({step:i, label:i<16?COL_LABEL[i]:'2週間', date:d, done:item.doneDates.includes(d), projected:false}));
 }
+
+// --- SHIFT MODE: each step's date = prev step's actual done date + gap ---
+function getSchedShift(item){
+  const sched=[];
+  for(let i=0;i<16;i++){
+    const comp=item.completions.find(c=>c.step===i);
+    let date,projected=false;
+    if(i===0){date=item.learnDate}
+    else{
+      const prev=sched[i-1];
+      date=addD(prev.doneOn||prev.date, GAPS[i]);
+      if(!prev.doneOn||prev.projected) projected=true;
+    }
+    sched.push({step:i, label:COL_LABEL[i], date, done:!!comp, doneOn:comp?comp.doneOn:null, projected});
+  }
+  return sched;
+}
+function getSchedShiftAll(item){
+  const sched=getSchedShift(item);
+  const last=sched[15];
+  if(!last.done) return sched;
+  let prevDone=last.doneOn;let step=16;const limit=addD(todayStr(),365);
+  while(true){
+    const comp=item.completions.find(c=>c.step===step);
+    const date=addD(prevDone,RECURRING_GAP);
+    if(date>limit)break;
+    sched.push({step, label:'2週間', date, done:!!comp, doneOn:comp?comp.doneOn:null, projected:false});
+    prevDone=comp?comp.doneOn:date;
+    if(!comp)break;
+    step++;
+  }
+  return sched;
+}
+
+// --- UNIFIED API ---
+function getSched16(item){return schedMode==='shift'?getSchedShift(item):getSchedFixed(item)}
+function getSchedAll(item){return schedMode==='shift'?getSchedShiftAll(item):getSchedFixedAll(item)}
+
+function getNextUndone(item){
+  const sched=getSchedAll(item);
+  if(schedMode==='shift') return sched.find(s=>!s.done&&!s.projected)||null;
+  return sched.find(s=>!s.done)||null;
+}
+
 function countOnDate(ds){
   let n=0;
   for(const it of S.items){
-    for(const d of revDatesAll(it)){if(d===ds&&!(it.doneDates||[]).includes(d)){n++;break}}
+    if(schedMode==='shift'){const nd=getNextUndone(it);if(nd&&nd.date===ds)n++}
+    else{for(const s of getSchedAll(it)){if(s.date===ds&&!s.done){n++;break}}}
   }
   return n;
 }
-// Link icon HTML
+
+// --- TOGGLE / COMPLETE ---
+function toggleComplete(item,stepOrDate){
+  if(schedMode==='shift'){
+    const step=typeof stepOrDate==='number'?stepOrDate:stepOrDate;
+    const idx=item.completions.findIndex(c=>c.step===step);
+    commit(idx<0?'完了':'完了取り消し');
+    if(idx>=0){
+      // Remove this and all later completions
+      item.completions=item.completions.filter(c=>c.step<step);
+    }else{
+      item.completions.push({step, doneOn:todayStr()});
+    }
+  }else{
+    const date=typeof stepOrDate==='string'?stepOrDate:stepOrDate;
+    const idx=item.doneDates.indexOf(date);
+    commit(idx<0?'完了':'完了取り消し');
+    if(idx>=0)item.doneDates.splice(idx,1);else item.doneDates.push(date);
+  }
+  save();render();
+}
+
 const LINK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
 const MEMO_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
-let memoItemId=null;
 
 // ═══ Nav ═══
 function go(v){curView=v;document.querySelectorAll('.vw').forEach(e=>e.classList.remove('on'));$('vw-'+v).classList.add('on');
@@ -376,53 +443,67 @@ function renderTable(){
   let h='';
   for(const item of sorted){
     const cat=catById(item.categoryId);
-    const dates=revDates(item);
-    const dd=item.doneDates||[];
+    const sched=getSched16(item);
     const isOpen=openCards[item.id];
-    let overdueN=0,hasToday=false,allDone=true;
-    for(const rd of dates){
-      const done=dd.includes(rd.date);
-      if(rd.date===today&&!done)hasToday=true;
-      if(rd.date<today&&!done)overdueN++;
-      if(!done)allDone=false;
+    const nxt=getNextUndone(item);
+    let hasOverdue=false,hasToday=false,allDone=sched.every(s=>s.done);
+    if(nxt&&!nxt.projected){if(nxt.date===today)hasToday=true;if(nxt.date<today)hasOverdue=true}
+    if(schedMode==='fixed'){
+      // Count actual overdue in fixed mode
+      let od=0;for(const s of sched){if(s.date<today&&!s.done)od++}
+      hasOverdue=od>0;
+      for(const s of sched){if(s.date===today&&!s.done)hasToday=true}
     }
     let badges='';
-    if(overdueN>0)badges+=`<span class="ic-badge overdue">${overdueN}</span>`;
+    if(hasOverdue)badges+=`<span class="ic-badge overdue">${schedMode==='shift'?'要復習':'未完了'}</span>`;
     if(hasToday)badges+=`<span class="ic-badge today">今日</span>`;
     if(allDone)badges+=`<span class="ic-badge done-all">✓</span>`;
-    const hasMemo=!!(item.notes&&item.notes.trim());
-    const hasLink=!!item.link;
-    const memoBtn=`<button class="ic-memo ${hasMemo?'has':'empty'}" onclick="event.stopPropagation();openMemo('${item.id}')" title="${hasMemo?'メモを表示':'メモを追加'}">${MEMO_SVG}</button>`;
-    const linkBtn=hasLink?`<a class="ic-link" href="${esc(item.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="${esc(item.link)}">${LINK_SVG}</a>`:'';
+    const hasMemo=!!(item.notes&&item.notes.trim());const hasLink=!!item.link;
+    const memoBtn=`<button class="ic-memo ${hasMemo?'has':'empty'}" onclick="event.stopPropagation();openMemo('${item.id}')">${MEMO_SVG}</button>`;
+    const linkBtn=hasLink?`<a class="ic-link" href="${esc(item.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${LINK_SVG}</a>`:'';
+    const compCount=schedMode==='shift'?item.completions.length:item.doneDates.length;
 
     h+=`<div class="icard ${isOpen?'open':''} ${hasMemo?'has-memo':''}">
       <div class="icard-head" onclick="toggleCard('${item.id}')">
         <div class="icard-body"><span class="ic-cat ${catCC(cat)}">${cat?esc(cat.name):''}</span><div class="ic-nm">${esc(item.name)}</div>
-        <div class="ic-mt">学習日 ${fS(item.learnDate)} · 完了 ${dd.length}回</div></div>
-        ${memoBtn}
-        ${linkBtn}
-        <div class="ic-badges">${badges}</div>
+        <div class="ic-mt">学習日 ${fS(item.learnDate)} · 完了 ${compCount}回${nxt&&!nxt.projected?' · 次回 '+fS(nxt.date):''}</div></div>
+        ${memoBtn}${linkBtn}<div class="ic-badges">${badges}</div>
         <svg class="ic-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </div>`;
     if(isOpen){
       h+=`<div class="rgrid">`;
-      for(let i=0;i<dates.length;i++){
-        const rd=dates[i];const done=dd.includes(rd.date);
-        const isT=rd.date===today;const isPast=rd.date<today;
+      for(const s of sched){
+        const isT=s.date===today;const isPast=s.date<today;
+        const isNext=nxt&&s.step===nxt.step&&!s.done;
         let cls='rc-future';
-        if(isT)cls='rc-today';
-        else if(isPast&&!done)cls='rc-overdue';
-        if(done)cls+=' rc-done';
-        h+=`<div class="rcell ${cls}" onclick="tglCell('${item.id}','${rd.date}')">
-          <div class="rc-label">${COL_LABEL[i]}</div>
-          <div class="rc-date">${fS(rd.date)}</div>
-          <div class="rc-dow">${fDow(rd.date)}</div>
-        </div>`;
+        if(schedMode==='shift'){
+          if(s.projected&&!s.done)cls='rc-future rc-projected';
+          else if(isNext)cls=isT?'rc-today rc-next':(isPast?'rc-overdue rc-next':'rc-next');
+          else if(isT&&!s.done)cls='rc-today';
+          else if(isPast&&!s.done&&!s.projected)cls='rc-overdue';
+          if(s.done)cls='rc-done';
+        }else{
+          if(isT&&!s.done)cls='rc-today';
+          else if(isPast&&!s.done)cls='rc-overdue';
+          if(s.done)cls+=' rc-done';
+        }
+        // Click handler
+        let canClick=true;
+        if(schedMode==='shift'){canClick=s.done||(isNext&&!s.projected)}
+        const clickKey=schedMode==='shift'?s.step:`'${s.date}'`;
+        const onclick=canClick?`onclick="tglCell('${item.id}',${clickKey})"`:'';
+        const cursor=canClick?'':'cursor:default;opacity:.5;';
+        // Date display
+        let dateHTML;
+        if(schedMode==='shift'&&s.projected&&!s.done){
+          dateHTML=`<div class="rc-date" style="font-size:9px">${fS(s.date)}?</div>`;
+        }else{
+          dateHTML=`<div class="rc-date">${fS(s.date)}</div><div class="rc-dow">${fDow(s.date)}</div>`;
+        }
+        const doneInfo=(schedMode==='shift'&&s.done&&s.doneOn)?`<div style="font-size:7px;color:#34d399;margin-top:1px">${fS(s.doneOn)}</div>`:'';
+        h+=`<div class="rcell ${cls}" ${onclick} style="${cursor}"><div class="rc-label">${s.label}</div>${dateHTML}${doneInfo}</div>`;
       }
-      h+=`</div>
-      <div style="padding:0 12px 10px;display:flex;gap:6px">
-        <button class="btn bs" style="font-size:11px;padding:7px" onclick="openDet('${item.id}')">詳細を編集</button>
-      </div>`;
+      h+=`</div><div style="padding:0 12px 10px"><button class="btn bs" style="font-size:11px;padding:7px" onclick="openDet('${item.id}')">詳細を編集</button></div>`;
     }
     h+=`</div>`;
   }
@@ -430,14 +511,7 @@ function renderTable(){
 }
 function setCat(id){curCat=id;renderTable()}
 function toggleCard(id){openCards[id]=!openCards[id];renderTable()}
-function tglCell(id,date){
-  const item=S.items.find(i=>i.id===id);if(!item)return;
-  if(!item.doneDates)item.doneDates=[];
-  const idx=item.doneDates.indexOf(date);
-  commit(idx<0?'完了':'完了取り消し');
-  if(idx>=0)item.doneDates.splice(idx,1);else item.doneDates.push(date);
-  save();render();
-}
+function tglCell(id,stepOrDate){const item=S.items.find(i=>i.id===id);if(item)toggleComplete(item,stepOrDate)}
 
 // ═══ TODAY VIEW ═══
 function renderToday(){
@@ -447,11 +521,17 @@ function renderToday(){
     wh+=`<div class="wd ${i===0?'today':''}"><p class="dl">${wdl[dd.getDay()]}</p><p class="dn">${dd.getDate()}</p><p class="dc ${c===0?'z':''}">${c}</p></div>`}
   const todayR=[],overdueR=[];
   for(const it of S.items){
-    const dd=it.doneDates||[];
-    for(const d of revDatesAll(it)){
-      if(dd.includes(d))continue;
-      if(d===today)todayR.push({item:it,date:d});
-      else if(d<today)overdueR.push({item:it,date:d});
+    if(schedMode==='shift'){
+      const nd=getNextUndone(it);
+      if(!nd)continue;
+      const e={item:it,step:nd.step,date:nd.date,label:nd.label};
+      if(nd.date===today)todayR.push(e);else if(nd.date<today)overdueR.push(e);
+    }else{
+      for(const s of getSchedAll(it)){
+        if(s.done)continue;
+        if(s.date===today)todayR.push({item:it,step:s.step,date:s.date,label:s.label});
+        else if(s.date<today)overdueR.push({item:it,step:s.step,date:s.date,label:s.label});
+      }
     }
   }
   overdueR.sort((a,b)=>a.date.localeCompare(b.date));
@@ -463,11 +543,11 @@ function renderToday(){
     <div class="ws">${wh}</div>`;
   if(overdueR.length){
     h+=`<div class="sec-t">未完了 <span class="sec-c" style="background:rgba(255,107,107,.1);color:#ff8a8a">${overdueR.length}</span></div>`;
-    overdueR.forEach(r=>{h+=mkTCard(r,true)});
+    overdueR.forEach(r=>h+=mkTCard(r,true));
   }
   if(todayR.length){
     h+=`<div class="sec-t">今日の復習 <span class="sec-c">${todayR.length}</span></div>`;
-    todayR.forEach(r=>{h+=mkTCard(r,false)});
+    todayR.forEach(r=>h+=mkTCard(r,false));
   }
   if(!total&&S.items.length>0)h+=`<div class="empty"><p>今日は復習なし</p></div>`;
   if(!S.items.length)h+=`<div class="empty"><p>項目がありません</p><p class="sub">右下の + から追加</p></div>`;
@@ -475,34 +555,26 @@ function renderToday(){
 }
 function mkTCard(r,overdue){
   const cat=catById(r.item.categoryId);
-  const done=(r.item.doneDates||[]).includes(r.date);
-  const hasMemo=!!(r.item.notes&&r.item.notes.trim());
-  const hasLink=!!r.item.link;
+  const hasMemo=!!(r.item.notes&&r.item.notes.trim());const hasLink=!!r.item.link;
   const memoBtn=`<button class="ic-memo ${hasMemo?'has':'empty'}" style="width:24px;height:24px" onclick="event.stopPropagation();openMemo('${r.item.id}')">${MEMO_SVG}</button>`;
   const linkBtn=hasLink?`<a class="tc-link" href="${esc(r.item.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${LINK_SVG}</a>`:'';
-  return`<div class="tcard ${overdue?'overdue':''} ${done?'done':''}">
-    <button class="chk ${done?'on':''}" onclick="tglToday('${r.item.id}','${r.date}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></button>
-    <div class="tc-body"><span class="ic-cat ${catCC(cat)}">${cat?esc(cat.name):'未分類'}</span><div class="tc-nm">${esc(r.item.name)}</div><div class="tc-mt">${overdue?fS(r.date)+' の予定':'今日'}</div></div>
-    ${memoBtn}
-    ${linkBtn}
-    ${done?`<button class="tc-undo" onclick="event.stopPropagation();tglToday('${r.item.id}','${r.date}')">取り消し</button>`:''}
+  const clickKey=schedMode==='shift'?r.step:`'${r.date}'`;
+  return`<div class="tcard ${overdue?'overdue':''}">
+    <button class="chk" onclick="tglToday('${r.item.id}',${clickKey})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></button>
+    <div class="tc-body"><span class="ic-cat ${catCC(cat)}">${cat?esc(cat.name):'未分類'}</span><div class="tc-nm">${esc(r.item.name)}</div><div class="tc-mt">${overdue?fS(r.date)+' の予定 · '+r.label:r.label}</div></div>
+    ${memoBtn}${linkBtn}
   </div>`;
 }
-function tglToday(id,date){
-  const item=S.items.find(i=>i.id===id);if(!item)return;
-  if(!item.doneDates)item.doneDates=[];
-  const idx=item.doneDates.indexOf(date);
-  commit(idx<0?'完了':'完了取り消し');
-  if(idx>=0)item.doneDates.splice(idx,1);else item.doneDates.push(date);
-  save();render();
-}
+function tglToday(id,stepOrDate){const item=S.items.find(i=>i.id===id);if(item)toggleComplete(item,stepOrDate)}
 
 // ═══ Stats ═══
 let simC=null;
 function renderStats(){
   const today=todayStr();let tN=0,oN=0;
-  for(const it of S.items){const dd=it.doneDates||[];
-    for(const d of revDatesAll(it)){if(dd.includes(d))continue;if(d===today)tN++;if(d<today)oN++;}}
+  for(const it of S.items){
+    if(schedMode==='shift'){const nd=getNextUndone(it);if(!nd)continue;if(nd.date===today)tN++;if(nd.date<today)oN++}
+    else{for(const s of getSchedAll(it)){if(s.done)continue;if(s.date===today)tN++;if(s.date<today)oN++}}
+  }
   let h=`<div class="sg">
     <div class="st ac"><p class="st-l">登録項目</p><p class="st-v">${S.items.length}<span class="st-u">項目</span></p></div>
     <div class="st"><p class="st-l">今日</p><p class="st-v">${tN}<span class="st-u">件</span></p></div>
@@ -525,13 +597,74 @@ function renderStats(){
 }
 function rcSim(day){if(day<1)return 0;let n=0;for(const o of CUM)if(o<=day-1)n++;let x=CUM[15]+RECURRING_GAP;while(x<=day-1){n++;x+=RECURRING_GAP}return n}
 function updateSim(){
-  const rate=+$('sr').value,day=+$('sd').value;
-  $('sr-o').textContent=rate;$('sd-o').textContent=day;
+  const rate=+$('sr').value,day=+$('sd').value;$('sr-o').textContent=rate;$('sd-o').textContent=day;
   $('sim-r').textContent=rcSim(day)*rate;$('sim-c').textContent=day*rate;
   if(!simC){const lb=[],bd=[];for(let d=1;d<=365;d++){lb.push(d);bd.push(rcSim(d))}
     simC=new Chart($('sim-ch'),{type:'line',data:{labels:lb,datasets:[{data:bd.map(v=>v*rate),borderColor:'#6c5ce7',backgroundColor:'rgba(108,92,231,.1)',borderWidth:2,pointRadius:0,fill:true,tension:.1},{data:[],borderColor:'#f472b6',backgroundColor:'#f472b6',pointRadius:4,pointBorderColor:'#fff',pointBorderWidth:2,showLine:false}]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{ticks:{color:'#3a3a4a',maxTicksLimit:5,font:{size:8}},grid:{color:'rgba(255,255,255,.03)'}},y:{beginAtZero:true,ticks:{color:'#3a3a4a',font:{size:8},precision:0},grid:{color:'rgba(255,255,255,.03)'}}}}}); simC._b=bd}
   simC.data.datasets[0].data=simC._b.map(v=>v*rate);
   simC.data.datasets[1].data=simC.data.labels.map(l=>l===day?simC._b[l-1]*rate:null);simC.update('none');
+}
+
+// ═══ Quick memo popup ═══
+function openMemo(id){
+  const item=S.items.find(i=>i.id===id);if(!item)return;memoItemId=id;
+  $('memo-pop-title').textContent=item.name;$('memo-pop-text').value=item.notes||'';
+  let icons='';
+  if(item.link)icons+=`<a class="ic-link" href="${esc(item.link)}" target="_blank" rel="noopener" style="width:30px;height:30px">${LINK_SVG}</a>`;
+  icons+=`<button class="ic-memo has" onclick="openDet('${id}');closeMemo()" style="width:30px;height:30px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
+  $('memo-pop-icons').innerHTML=icons;
+  $('memo-pop').classList.add('show');document.body.style.overflow='hidden';
+  setTimeout(()=>$('memo-pop-text').focus(),300);
+}
+function closeMemo(e){if(e&&e.target!==e.currentTarget)return;$('memo-pop').classList.remove('show');document.body.style.overflow='';memoItemId=null}
+function saveMemo(){if(!memoItemId)return;const item=S.items.find(i=>i.id===memoItemId);if(!item)return;commit('メモ編集');item.notes=$('memo-pop-text').value.trim();save();closeMemo();render()}
+
+// ═══ Modals ═══
+function showM(id){$(id).classList.add('show');document.body.style.overflow='hidden'}
+function closeM(e,id){if(e&&e.target!==e.currentTarget)return;$(id).classList.remove('show');document.body.style.overflow=''}
+function openSettings(){
+  const url=localStorage.getItem('taliyo-sync-url')||'';$('sync-url').value=url;
+  $('sync-status').innerHTML=url?'URL設定済み':'URLを設定してください';
+  // Mode toggle
+  $('mode-fixed').classList.toggle('on',schedMode==='fixed');
+  $('mode-shift').classList.toggle('on',schedMode==='shift');
+  showM('m-set');
+}
+function setMode(m){
+  schedMode=m;localStorage.setItem(MODE_KEY,m);
+  $('mode-fixed').classList.toggle('on',m==='fixed');
+  $('mode-shift').classList.toggle('on',m==='shift');
+  render();
+}
+
+// ═══ Google Sheets Sync (v2) ═══
+function saveSyncUrl(){const url=$('sync-url').value.trim();if(url){localStorage.setItem('taliyo-sync-url',url);$('sync-status').innerHTML='<span style="color:#86efac">URL保存しました</span>'}else{localStorage.removeItem('taliyo-sync-url');$('sync-status').innerHTML='URLをクリアしました'}}
+function getSyncUrl(){const url=$('sync-url').value.trim()||localStorage.getItem('taliyo-sync-url')||'';if(!url){$('sync-status').innerHTML='<span style="color:#ff6b6b">URLを入力してください</span>';return null}return url}
+async function syncPush(){
+  const url=getSyncUrl();if(!url)return;
+  const btn=$('sync-push');btn.disabled=true;btn.innerHTML='<span class="sync-spinner"></span>送信中...';$('sync-status').innerHTML='';
+  try{
+    let frame=document.getElementById('sync-frame');if(!frame){frame=document.createElement('iframe');frame.id='sync-frame';frame.name='sync-frame';frame.style.display='none';document.body.appendChild(frame)}
+    const form=document.createElement('form');form.method='POST';form.action=url;form.target='sync-frame';
+    const inp=document.createElement('textarea');inp.name='data';inp.value=JSON.stringify(S);form.appendChild(inp);document.body.appendChild(form);form.submit();document.body.removeChild(form);
+    await new Promise(r=>setTimeout(r,3000));
+    try{const res=await fetch(url);const d=await res.json();
+      if(d.categories||d.items){localStorage.setItem('taliyo-sync-url',$('sync-url').value.trim());$('sync-status').innerHTML=`<span style="color:#86efac">送信完了 ✓</span>`}
+      else $('sync-status').innerHTML=`<span style="color:#fde68a">送信済み（受信で確認）</span>`}
+    catch(ve){localStorage.setItem('taliyo-sync-url',$('sync-url').value.trim());$('sync-status').innerHTML=`<span style="color:#fde68a">送信済み（受信で確認）</span>`}
+  }catch(e){$('sync-status').innerHTML=`<span style="color:#ff6b6b">送信失敗: ${e.message}</span>`}
+  btn.disabled=false;btn.innerHTML='送信';
+}
+async function syncPull(){
+  const url=getSyncUrl();if(!url)return;
+  const btn=$('sync-pull');btn.disabled=true;btn.innerHTML='<span class="sync-spinner"></span>受信中...';$('sync-status').innerHTML='';
+  try{const res=await fetch(url);if(!res.ok)throw new Error('HTTP '+res.status);const d=await res.json();
+    if(d.error)throw new Error(d.error);commit('スプレッドシートから受信');
+    S={categories:d.categories||[],items:d.items||[]};ensureFields();save();
+    localStorage.setItem('taliyo-sync-url',$('sync-url').value.trim());
+    $('sync-status').innerHTML=`<span style="color:#86efac">受信完了 ✓</span> · ${S.items.length}項目`;render();
+  }catch(e){$('sync-status').innerHTML=`<span style="color:#ff6b6b">受信失敗: ${e.message}</span>`}
+  btn.disabled=false;btn.innerHTML='受信';
 }
 
 // ═══ Add ═══
@@ -547,174 +680,53 @@ function submitAdd(){
   let cid=$('a-cat').value;const nm=$('a-nm').value.trim(),dt=$('a-dt').value;
   const memo=$('a-memo').value.trim(),link=$('a-link').value.trim();
   if(!nm||!dt)return;
-  if(cid==='__new__'){const cn=$('a-nc').value.trim();if(!cn)return;
-    const nc={id:uid(),name:cn,cc:CC[S.categories.length%CC.length]};S.categories.push(nc);cid=nc.id}
-  commit('項目追加');
-  S.items.push({id:uid(),categoryId:cid,name:nm,learnDate:dt,doneDates:[],notes:memo,link:link});
+  if(cid==='__new__'){const cn=$('a-nc').value.trim();if(!cn)return;const nc={id:uid(),name:cn,cc:CC[S.categories.length%CC.length]};S.categories.push(nc);cid=nc.id}
+  commit('項目追加');S.items.push({id:uid(),categoryId:cid,name:nm,learnDate:dt,doneDates:[],completions:[],notes:memo,link:link});
   save();closeM(null,'m-add');render();
 }
 
 // ═══ Detail ═══
 function openDet(id){
-  const item=S.items.find(i=>i.id===id);if(!item)return;detId=id;
-  $('d-title').textContent=item.name;
-  $('d-cat').innerHTML=S.categories.map(c=>`<option value="${c.id}" ${c.id===item.categoryId?'selected':''}>${esc(c.name)}</option>`).join('');
+  const item=S.items.find(i=>i.id===id);if(!item)return;detId=id;$('d-title').textContent=item.name;
+  let opts=S.categories.map(c=>`<option value="${c.id}" ${c.id===item.categoryId?'selected':''}>${esc(c.name)}</option>`).join('');
+  opts+='<option value="__new__">+ 新しいカテゴリー</option>';$('d-cat').innerHTML=opts;
+  $('d-ncf').style.display='none';$('d-nc').value='';
+  $('d-cat').onchange=()=>{$('d-ncf').style.display=$('d-cat').value==='__new__'?'block':'none'};
   $('d-nm').value=item.name;$('d-dt').value=item.learnDate;$('d-memo').value=item.notes||'';$('d-link').value=item.link||'';
   showM('m-det');
 }
 function saveDet(){
-  const item=S.items.find(i=>i.id===detId);if(!item)return;
-  const nm=$('d-nm').value.trim();if(!nm)return;
-  commit('項目編集');
-  item.categoryId=$('d-cat').value||item.categoryId;item.name=nm;item.learnDate=$('d-dt').value;
+  const item=S.items.find(i=>i.id===detId);if(!item)return;const nm=$('d-nm').value.trim();if(!nm)return;
+  commit('項目編集');let catId=$('d-cat').value;
+  if(catId==='__new__'){const cn=$('d-nc').value.trim();if(!cn){item.name=nm;save();closeM(null,'m-det');render();return}
+    const nc={id:uid(),name:cn,cc:CC[S.categories.length%CC.length]};S.categories.push(nc);catId=nc.id}
+  item.categoryId=catId||item.categoryId;item.name=nm;
+  const nd=$('d-dt').value;if(item.learnDate!==nd){item.learnDate=nd;item.doneDates=[];item.completions=[]}
   item.notes=$('d-memo').value.trim();item.link=$('d-link').value.trim();
   save();closeM(null,'m-det');render();
 }
 function markAllPast(){
-  const item=S.items.find(i=>i.id===detId);if(!item)return;
-  commit('過去すべて完了');
-  if(!item.doneDates)item.doneDates=[];
+  const item=S.items.find(i=>i.id===detId);if(!item)return;commit('過去すべて完了');
   const today=todayStr();
-  for(const d of revDatesAll(item)){if(d<=today&&!item.doneDates.includes(d))item.doneDates.push(d)}
+  if(schedMode==='shift'){
+    const sched=getSchedShift(item);
+    for(const s of sched){if(s.date<=today&&!s.done&&!s.projected)item.completions.push({step:s.step,doneOn:s.date})}
+  }else{
+    for(const s of getSchedAll(item)){if(s.date<=today&&!s.done)item.doneDates.push(s.date)}
+  }
   save();render();
 }
-function delItem(){
-  const idx=S.items.findIndex(i=>i.id===detId);if(idx<0)return;
-  commit('項目削除');S.items.splice(idx,1);save();closeM(null,'m-det');render();
-}
-
-// ═══ Quick memo popup ═══
-function openMemo(id){
-  const item=S.items.find(i=>i.id===id);if(!item)return;
-  memoItemId=id;
-  $('memo-pop-title').textContent=item.name;
-  $('memo-pop-text').value=item.notes||'';
-  // Icons in popup header
-  let icons='';
-  if(item.link) icons+=`<a class="ic-link" href="${esc(item.link)}" target="_blank" rel="noopener" style="width:30px;height:30px">${LINK_SVG}</a>`;
-  icons+=`<button class="ic-memo has" onclick="openDet('${id}');closeMemo()" style="width:30px;height:30px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
-  $('memo-pop-icons').innerHTML=icons;
-  $('memo-pop').classList.add('show');
-  document.body.style.overflow='hidden';
-  setTimeout(()=>$('memo-pop-text').focus(),300);
-}
-function closeMemo(e){
-  if(e&&e.target!==e.currentTarget)return;
-  $('memo-pop').classList.remove('show');
-  document.body.style.overflow='';
-  memoItemId=null;
-}
-function saveMemo(){
-  if(!memoItemId)return;
-  const item=S.items.find(i=>i.id===memoItemId);if(!item)return;
-  commit('メモ編集');
-  item.notes=$('memo-pop-text').value.trim();
-  save();closeMemo();render();
-}
-
-// ═══ Modals ═══
-function showM(id){$(id).classList.add('show');document.body.style.overflow='hidden'}
-function closeM(e,id){if(e&&e.target!==e.currentTarget)return;$(id).classList.remove('show');document.body.style.overflow=''}
-function openSettings(){
-  const url=localStorage.getItem('taliyo-sync-url')||'';
-  $('sync-url').value=url;
-  $('sync-status').innerHTML=url?'URL設定済み':'URLを設定してください';
-  showM('m-set');
-}
-
-// ═══ Google Sheets Sync (v2) ═══
-// POST=hiddenフォーム送信(CORSの問題を完全回避)
-// GET=通常のfetch(GASのGETはCORS対応済み)
-function saveSyncUrl(){
-  const url=$('sync-url').value.trim();
-  if(url){localStorage.setItem('taliyo-sync-url',url);$('sync-status').innerHTML='<span style="color:#86efac">URL保存しました</span>'}
-  else{localStorage.removeItem('taliyo-sync-url');$('sync-status').innerHTML='URLをクリアしました'}
-}
-function getSyncUrl(){
-  const url=$('sync-url').value.trim()||localStorage.getItem('taliyo-sync-url')||'';
-  if(!url){$('sync-status').innerHTML='<span style="color:#ff6b6b">URLを入力してください</span>';return null}
-  return url;
-}
-
-async function syncPush(){
-  const url=getSyncUrl();if(!url)return;
-  const btn=$('sync-push');btn.disabled=true;btn.innerHTML='<span class="sync-spinner"></span>送信中...';
-  $('sync-status').innerHTML='';
-  try{
-    // hiddenフォーム + iframe で CORS を完全回避
-    let frame=document.getElementById('sync-frame');
-    if(!frame){frame=document.createElement('iframe');frame.id='sync-frame';frame.name='sync-frame';frame.style.display='none';document.body.appendChild(frame)}
-
-    const form=document.createElement('form');
-    form.method='POST';
-    form.action=url;
-    form.target='sync-frame';
-    const inp=document.createElement('textarea');
-    inp.name='data';
-    inp.value=JSON.stringify(S);
-    form.appendChild(inp);
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
-
-    // 少し待ってからGETで確認
-    await new Promise(r=>setTimeout(r,3000));
-    try{
-      const res=await fetch(url);
-      const text=await res.text();
-      const d=JSON.parse(text);
-      if(d.categories||d.items){
-        localStorage.setItem('taliyo-sync-url',$('sync-url').value.trim());
-        $('sync-status').innerHTML=`<span style="color:#86efac">送信完了 ✓</span> · <strong>${new Date().toLocaleTimeString('ja-JP')}</strong>`;
-      } else {
-        $('sync-status').innerHTML=`<span style="color:#fde68a">送信されましたが確認できません。受信で確認してください</span>`;
-      }
-    }catch(ve){
-      // 確認GETが失敗しても送信自体は成功している可能性が高い
-      localStorage.setItem('taliyo-sync-url',$('sync-url').value.trim());
-      $('sync-status').innerHTML=`<span style="color:#fde68a">送信しました（確認は受信で）</span>`;
-    }
-  }catch(e){
-    $('sync-status').innerHTML=`<span style="color:#ff6b6b">送信失敗: ${e.message}</span>`;
-  }
-  btn.disabled=false;btn.innerHTML='送信';
-}
-
-async function syncPull(){
-  const url=getSyncUrl();if(!url)return;
-  const btn=$('sync-pull');btn.disabled=true;btn.innerHTML='<span class="sync-spinner"></span>受信中...';
-  $('sync-status').innerHTML='';
-  try{
-    const res=await fetch(url);
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const text=await res.text();
-    if(!text||text.trim().length===0) throw new Error('空のレスポンス');
-    const d=JSON.parse(text);
-    if(d.error) throw new Error(d.error);
-    commit('スプレッドシートから受信');
-    S={categories:d.categories||[],items:d.items||[]};
-    migrate();save();
-    localStorage.setItem('taliyo-sync-url',$('sync-url').value.trim());
-    $('sync-status').innerHTML=`<span style="color:#86efac">受信完了 ✓</span> · ${S.items.length}項目 · <strong>${new Date().toLocaleTimeString('ja-JP')}</strong>`;
-    render();
-  }catch(e){
-    $('sync-status').innerHTML=`<span style="color:#ff6b6b">受信失敗: ${e.message}</span>`;
-  }
-  btn.disabled=false;btn.innerHTML='受信';
-}
+function delItem(){const idx=S.items.findIndex(i=>i.id===detId);if(idx<0)return;commit('項目削除');S.items.splice(idx,1);save();closeM(null,'m-det');render()}
 
 // ═══ Settings ═══
 const TPL=['1：宅地建物取引業の意味','2：免許制度','3：免許基準','4：宅地建物取引業者の手続き','5：宅地建物取引士制度','6：営業保証金','7：弁済業務保証金(保証協会)','8：取引の諸規定','9：媒介契約の規制','10：重要事項の説明','11：37条書面','12：8種規制','13：報酬','14：監督・罰則','15：住宅瑕疵担保履行法'];
-function loadTpl(){if(!confirm('宅建業法15項目を追加しますか?'))return;
-  commit('テンプレート追加');let cat=S.categories.find(c=>c.name==='宅建業法');
+function loadTpl(){if(!confirm('宅建業法15項目を追加しますか?'))return;commit('テンプレート追加');let cat=S.categories.find(c=>c.name==='宅建業法');
   if(!cat){cat={id:uid(),name:'宅建業法',cc:CC[S.categories.length%CC.length]};S.categories.push(cat)}
-  const t=todayStr();TPL.forEach(n=>S.items.push({id:uid(),categoryId:cat.id,name:n,learnDate:t,doneDates:[],notes:'',link:''}));
-  save();closeM(null,'m-set');render();
-}
+  const t=todayStr();TPL.forEach(n=>S.items.push({id:uid(),categoryId:cat.id,name:n,learnDate:t,doneDates:[],completions:[],notes:'',link:''}));save();closeM(null,'m-set');render()}
 function expData(){const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`taliyo-${todayStr()}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a)}
 function impData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=ev=>{try{const p=JSON.parse(ev.target.result);if(!p.categories||!p.items)throw 0;
-    commit('インポート');S={categories:p.categories,items:p.items};migrate();save();closeM(null,'m-set');render()}catch{alert('インポート失敗')}};r.readAsText(f);e.target.value='';}
+    commit('インポート');S={categories:p.categories,items:p.items};ensureFields();save();closeM(null,'m-set');render()}catch{alert('インポート失敗')}};r.readAsText(f);e.target.value=''}
 function resetAll(){if(!confirm('すべて消去しますか?'))return;commit('全消去');S={categories:[],items:[]};save();closeM(null,'m-set');go('table')}
 
 // ═══ Init ═══
