@@ -400,21 +400,39 @@ function countOnDate(ds){
 
 // --- TOGGLE / COMPLETE ---
 function toggleComplete(item,stepOrDate){
+  if(!item.doneDates)item.doneDates=[];
+  if(!item.completions)item.completions=[];
+  const fixedDates=CUM.map(off=>addD(item.learnDate,off));
+
   if(schedMode==='shift'){
     const step=typeof stepOrDate==='number'?stepOrDate:stepOrDate;
     const idx=item.completions.findIndex(c=>c.step===step);
     commit(idx<0?'完了':'完了取り消し');
     if(idx>=0){
-      // Remove this and all later completions
+      // Remove this and all later completions + mirror to doneDates
+      const removedSteps=item.completions.filter(c=>c.step>=step).map(c=>c.step);
       item.completions=item.completions.filter(c=>c.step<step);
+      for(const rs of removedSteps){if(rs<16){const d=fixedDates[rs];const di=item.doneDates.indexOf(d);if(di>=0)item.doneDates.splice(di,1)}}
     }else{
       item.completions.push({step, doneOn:todayStr()});
+      // Mirror to doneDates
+      if(step<16) item.doneDates.push(fixedDates[step]);
     }
   }else{
     const date=typeof stepOrDate==='string'?stepOrDate:stepOrDate;
     const idx=item.doneDates.indexOf(date);
     commit(idx<0?'完了':'完了取り消し');
-    if(idx>=0)item.doneDates.splice(idx,1);else item.doneDates.push(date);
+    if(idx>=0){
+      item.doneDates.splice(idx,1);
+      // Mirror to completions
+      const si=fixedDates.indexOf(date);
+      if(si>=0)item.completions=item.completions.filter(c=>c.step!==si);
+    }else{
+      item.doneDates.push(date);
+      // Mirror to completions
+      const si=fixedDates.indexOf(date);
+      if(si>=0&&!item.completions.find(c=>c.step===si))item.completions.push({step:si,doneOn:todayStr()});
+    }
   }
   save();render();
 }
@@ -628,7 +646,32 @@ function openSettings(){
   showM('m-set');
 }
 function setMode(m){
+  const prev=schedMode;
+  if(prev===m)return;
+  // Convert data between modes
+  for(const item of S.items){
+    if(!item.doneDates)item.doneDates=[];
+    if(!item.completions)item.completions=[];
+    if(prev==='fixed'&&m==='shift'){
+      // Fixed → Shift: convert doneDates to completions
+      const fixedDates=CUM.map(off=>addD(item.learnDate,off));
+      item.completions=[];
+      for(let i=0;i<fixedDates.length;i++){
+        if(item.doneDates.includes(fixedDates[i])){
+          item.completions.push({step:i,doneOn:fixedDates[i]});
+        }
+      }
+    } else if(prev==='shift'&&m==='fixed'){
+      // Shift → Fixed: convert completions to doneDates
+      const fixedDates=CUM.map(off=>addD(item.learnDate,off));
+      item.doneDates=[];
+      for(const c of item.completions){
+        if(c.step<16) item.doneDates.push(fixedDates[c.step]);
+      }
+    }
+  }
   schedMode=m;localStorage.setItem(MODE_KEY,m);
+  save();
   $('mode-fixed').classList.toggle('on',m==='fixed');
   $('mode-shift').classList.toggle('on',m==='shift');
   render();
