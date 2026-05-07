@@ -651,30 +651,39 @@ function openSettings(){
 function setMode(m){
   const prev=schedMode;
   if(prev===m)return;
-  // Convert data between modes
+  // Ensure all items have both data stores
   for(const item of S.items){
     if(!item.doneDates)item.doneDates=[];
     if(!item.completions)item.completions=[];
+  }
+  // Convert data between modes
+  for(const item of S.items){
     if(prev==='fixed'&&m==='shift'){
-      // Fixed → Shift: convert doneDates to completions
+      // Fixed → Shift: rebuild completions from doneDates
       const fixedDates=CUM.map(off=>addD(item.learnDate,off));
-      item.completions=[];
+      const newComp=[];
       for(let i=0;i<fixedDates.length;i++){
-        if(item.doneDates.includes(fixedDates[i])){
-          item.completions.push({step:i,doneOn:fixedDates[i]});
+        if(item.doneDates.indexOf(fixedDates[i])>=0){
+          newComp.push({step:i,doneOn:fixedDates[i]});
         }
       }
+      item.completions=newComp;
     } else if(prev==='shift'&&m==='fixed'){
-      // Shift → Fixed: convert completions to doneDates
+      // Shift → Fixed: rebuild doneDates from completions
       const fixedDates=CUM.map(off=>addD(item.learnDate,off));
-      item.doneDates=[];
-      for(const c of item.completions){
-        if(c.step<16) item.doneDates.push(fixedDates[c.step]);
+      const newDone=[];
+      for(let i=0;i<item.completions.length;i++){
+        const c=item.completions[i];
+        if(c.step<16) newDone.push(fixedDates[c.step]);
       }
+      item.doneDates=newDone;
     }
   }
-  schedMode=m;localStorage.setItem(MODE_KEY,m);
+  // Update mode and persist
+  schedMode=m;
+  localStorage.setItem(MODE_KEY,m);
   save();
+  // Update UI
   $('mode-fixed').classList.toggle('on',m==='fixed');
   $('mode-shift').classList.toggle('on',m==='shift');
   render();
