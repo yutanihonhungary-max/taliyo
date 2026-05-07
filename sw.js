@@ -1,4 +1,4 @@
-const CACHE_NAME = 'taliyo-v1';
+const CACHE_NAME = 'taliyo-v3';
 const ASSETS = [
   './',
   './index.html',
