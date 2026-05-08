@@ -58,6 +58,23 @@ button{font-family:inherit;cursor:pointer}input,select,textarea{font-family:inhe
 .ic-badge.today{background:rgba(108,92,231,.18);color:#b5afff}
 .ic-badge.done-all{background:rgba(94,234,212,.12);color:#5eead4}
 
+/* Progress bar on card */
+.ic-prog{display:flex;align-items:center;gap:6px;padding:4px 14px 10px}
+.ic-prog-bar{flex:1;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.ic-prog-fill{height:100%;background:#5eead4;border-radius:2px;transition:width .3s}
+.ic-prog-text{font-size:9px;color:#5a5a6a;flex-shrink:0;font-weight:600}
+
+/* Category progress section */
+.cat-prog{margin:0 0 14px;display:flex;flex-direction:column;gap:6px}
+.cp-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:10px}
+.cp-name{font-size:12px;font-weight:600;flex-shrink:0;min-width:60px}
+.cp-bar{flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.cp-fill{height:100%;border-radius:3px;transition:width .3s}
+.cp-text{font-size:10px;color:#7a7a8a;flex-shrink:0;min-width:55px;text-align:right}
+
+/* Continue-add button in add modal */
+.btn-continue{background:rgba(108,92,231,.15);color:#b5afff;border:1px solid rgba(108,92,231,.3)}
+
 /* Review grid: 4 cols × 4 rows = 16 cells */
 .rgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:10px 12px 12px}
 .rcell{border-radius:8px;padding:6px 4px;text-align:center;cursor:pointer;transition:transform .1s,background .15s;position:relative;border:1px solid transparent;min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center}
@@ -143,9 +160,21 @@ textarea.inp{min-height:60px;resize:vertical;line-height:1.4}
 .ic-link{width:28px;height:28px;border-radius:50%;background:rgba(108,92,231,.15);border:none;color:#a5b4fc;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
 .ic-link:active{background:rgba(108,92,231,.3)}
 .ic-link svg{width:14px;height:14px}
-.tc-link{width:26px;height:26px;border-radius:50%;background:rgba(108,92,231,.12);border:none;color:#a5b4fc;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;margin-left:auto}
+.ic-link2{width:28px;height:28px;border-radius:50%;background:rgba(251,146,60,.15);border:none;color:#fb923c;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
+.ic-link2:active{background:rgba(251,146,60,.3)}
+.ic-link2 svg{width:14px;height:14px}
+.tc-link{width:26px;height:26px;border-radius:50%;background:rgba(108,92,231,.12);border:none;color:#a5b4fc;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
 .tc-link:active{background:rgba(108,92,231,.25)}
 .tc-link svg{width:13px;height:13px}
+.tc-link2{width:26px;height:26px;border-radius:50%;background:rgba(251,146,60,.12);border:none;color:#fb923c;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
+.tc-link2:active{background:rgba(251,146,60,.25)}
+.tc-link2 svg{width:13px;height:13px}
+.sync-ind{position:relative}
+.sync-dot{width:7px;height:7px;border-radius:50%;position:absolute;top:-1px;right:-1px;display:none}
+.sync-dot.syncing{display:block;background:#fbbf24;animation:pulse 1s infinite}
+.sync-dot.synced{display:block;background:#34d399}
+.sync-dot.err{display:block;background:#ff6b6b}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* Memo icon */
 .ic-memo{width:28px;height:28px;border-radius:50%;border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
@@ -211,10 +240,10 @@ textarea.inp{min-height:60px;resize:vertical;line-height:1.4}
   <h1 id="hdr-t">管理表</h1>
   <div class="hdr-r">
     <button class="ib" id="undo-btn" onclick="undoOne()" title="取り消し" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
-    <button class="ib" onclick="openSettings()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 0 1 0 4h-.09c-.66.01-1.25.4-1.51 1z"/></svg></button>
+    <button class="ib" onclick="openSettings()" class="sync-ind"><span class="sync-dot" id="sync-dot"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 0 1 0 4h-.09c-.66.01-1.25.4-1.51 1z"/></svg></button>
   </div>
 </header>
-<div id="vw-table" class="vw on"><div class="tabs" id="tabs"></div><div id="table-content"></div></div>
+<div id="vw-table" class="vw on"><div class="tabs" id="tabs"></div><div id="cat-progress"></div><div id="table-content"></div></div>
 <div id="vw-today" class="vw"><div id="today-content"></div></div>
 <div id="vw-stats" class="vw"><div id="stats-content"></div></div>
 <button class="fab" onclick="openAdd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
@@ -233,8 +262,9 @@ textarea.inp{min-height:60px;resize:vertical;line-height:1.4}
 <div class="fld"><label class="fl">項目名</label><input class="inp" id="a-nm" placeholder="例: 1：宅地建物取引業の意味" maxlength="60"></div>
 <div class="fld"><label class="fl">学習日</label><input class="inp" id="a-dt" type="date"></div>
 <div class="fld"><label class="fl">メモ</label><textarea class="inp" id="a-memo" placeholder="覚え方やポイント"></textarea></div>
-<div class="fld"><label class="fl">リンク</label><input class="inp" id="a-link" placeholder="https://..." type="url"></div>
-<div class="br"><button class="btn bs" onclick="closeM(null,'m-add')">キャンセル</button><button class="btn bp" onclick="submitAdd()">追加</button></div>
+<div class="fld"><label class="fl">リンク1</label><input class="inp" id="a-link" placeholder="https://..." type="url"></div>
+<div class="fld"><label class="fl">リンク2</label><input class="inp" id="a-link2" placeholder="https://..." type="url"></div>
+<div class="br"><button class="btn bs" onclick="closeM(null,'m-add')">キャンセル</button><button class="btn btn-continue" onclick="submitAdd(true)">追加して続ける</button><button class="btn bp" onclick="submitAdd(false)">追加</button></div>
 </div></div>
 
 <!-- Detail modal -->
@@ -245,7 +275,8 @@ textarea.inp{min-height:60px;resize:vertical;line-height:1.4}
 <div class="fld"><label class="fl">項目名</label><input class="inp" id="d-nm" maxlength="60"></div>
 <div class="fld"><label class="fl">学習日</label><input class="inp" id="d-dt" type="date"></div>
 <div class="fld"><label class="fl">メモ</label><textarea class="inp" id="d-memo" placeholder="メモ"></textarea></div>
-<div class="fld"><label class="fl">リンク</label><input class="inp" id="d-link" type="url" placeholder="https://..."></div>
+<div class="fld"><label class="fl">リンク1</label><input class="inp" id="d-link" type="url" placeholder="https://..."></div>
+<div class="fld"><label class="fl">リンク2</label><input class="inp" id="d-link2" type="url" placeholder="https://..."></div>
 <div class="fld"><label class="fl">過去をすべて完了</label><button class="btn bs" onclick="markAllPast()" style="font-size:12px;padding:8px">過去の未完了をすべてチェック</button></div>
 <div class="br"><button class="btn bs" onclick="closeM(null,'m-det')">閉じる</button><button class="btn bp" onclick="saveDet()">保存</button></div>
 <button class="btn bd" style="margin-top:8px" onclick="delItem()">この項目を削除</button>
@@ -327,12 +358,14 @@ function fFull(ds){return`${new Date(ds+'T00:00:00').getMonth()+1}月${new Date(
 function catById(id){return S.categories.find(c=>c.id===id)}
 function catCC(cat){return cat?cat.cc:CC[0]}
 function load(){try{const r=localStorage.getItem(SK);if(r)S=JSON.parse(r);ensureFields()}catch(e){}}
-function save(){try{localStorage.setItem(SK,JSON.stringify(S))}catch(e){}}
+function save(){try{localStorage.setItem(SK,JSON.stringify(S))}catch(e){}autoSyncDebounce()}
+let _syncTimer=null;
+function autoSyncDebounce(){clearTimeout(_syncTimer);_syncTimer=setTimeout(autoSyncPush,2000)}
 function commit(label){pushH(label);save()}
 function render(){if(curView==='table')renderTable();if(curView==='today')renderToday();if(curView==='stats')renderStats()}
 function ensureFields(){
   for(const it of S.items){
-    if(!it.doneDates) it.doneDates=[];
+    if(!it.doneDates) it.doneDates=[];if(!it.link2) it.link2='';
     if(!it.completions) it.completions=[];
     const fixedDates=CUM.map(off=>addD(it.learnDate,off));
     // Rebuild completions from doneDates if completions is empty but doneDates has data
@@ -474,6 +507,32 @@ function renderTable(){
   let th='<button class="tab '+(curCat==='__all__'?'on':'')+'" onclick="setCat(\'__all__\')">すべて</button>';
   S.categories.forEach(c=>{th+=`<button class="tab ${curCat===c.id?'on':''}" onclick="setCat('${c.id}')">${esc(c.name)}</button>`});
   $('tabs').innerHTML=th;
+
+  // Category progress (only show when "すべて" is selected)
+  if(curCat==='__all__'&&S.categories.length>0){
+    const catColors=['#818cf8','#fb7185','#34d399','#fbbf24','#94a3b8','#f472b6','#60a5fa'];
+    let cpH='<div class="cat-prog">';
+    S.categories.forEach((cat,ci)=>{
+      const catItems=S.items.filter(it=>it.categoryId===cat.id);
+      if(!catItems.length)return;
+      let totalSteps=catItems.length*16;
+      let doneSteps=0;
+      catItems.forEach(it=>{
+        const sched=getSched16(it);
+        doneSteps+=sched.filter(s=>s.done).length;
+      });
+      const pct=totalSteps>0?Math.round(doneSteps/totalSteps*100):0;
+      const col=catColors[ci%catColors.length];
+      cpH+=`<div class="cp-row"><span class="cp-name"><span class="ic-cat ${cat.cc}">${esc(cat.name)}</span></span>
+        <div class="cp-bar"><div class="cp-fill" style="width:${pct}%;background:${col}"></div></div>
+        <span class="cp-text">${doneSteps}/${totalSteps} (${pct}%)</span></div>`;
+    });
+    cpH+='</div>';
+    $('cat-progress').innerHTML=cpH;
+  }else{
+    $('cat-progress').innerHTML='';
+  }
+
   const items=curCat==='__all__'?S.items:S.items.filter(i=>i.categoryId===curCat);
   if(!items.length){$('table-content').innerHTML=`<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg><p>項目がありません</p><p class="sub">右下の + から追加</p></div>`;return}
   const today=todayStr();
@@ -496,18 +555,23 @@ function renderTable(){
     if(hasOverdue)badges+=`<span class="ic-badge overdue">${schedMode==='shift'?'要復習':'未完了'}</span>`;
     if(hasToday)badges+=`<span class="ic-badge today">今日</span>`;
     if(allDone)badges+=`<span class="ic-badge done-all">✓</span>`;
-    const hasMemo=!!(item.notes&&item.notes.trim());const hasLink=!!item.link;
+    const hasMemo=!!(item.notes&&item.notes.trim());const hasLink=!!item.link;const hasLink2=!!item.link2;
     const memoBtn=`<button class="ic-memo ${hasMemo?'has':'empty'}" onclick="event.stopPropagation();openMemo('${item.id}')">${MEMO_SVG}</button>`;
     const linkBtn=hasLink?`<a class="ic-link" href="${esc(item.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${LINK_SVG}</a>`:'';
+    const link2Btn=hasLink2?`<a class="ic-link2" href="${esc(item.link2)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${LINK_SVG}</a>`:'';
     const compCount=schedMode==='shift'?item.completions.length:item.doneDates.length;
 
     h+=`<div class="icard ${isOpen?'open':''} ${hasMemo?'has-memo':''}">
       <div class="icard-head" onclick="toggleCard('${item.id}')">
         <div class="icard-body"><span class="ic-cat ${catCC(cat)}">${cat?esc(cat.name):''}</span><div class="ic-nm">${esc(item.name)}</div>
         <div class="ic-mt">学習日 ${fS(item.learnDate)} · 完了 ${compCount}回${nxt&&!nxt.projected?' · 次回 '+fS(nxt.date):''}</div></div>
-        ${memoBtn}${linkBtn}<div class="ic-badges">${badges}</div>
+        ${memoBtn}${linkBtn}${link2Btn}<div class="ic-badges">${badges}</div>
         <svg class="ic-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </div>`;
+    // Progress bar (always visible, even when card is closed)
+    const doneN=sched.filter(s=>s.done).length;
+    const pct=Math.round(doneN/16*100);
+    h+=`<div class="ic-prog"><div class="ic-prog-bar"><div class="ic-prog-fill" style="width:${pct}%"></div></div><span class="ic-prog-text">${doneN}/16</span></div>`;
     if(isOpen){
       h+=`<div class="rgrid">`;
       for(const s of sched){
@@ -593,14 +657,15 @@ function renderToday(){
 }
 function mkTCard(r,overdue){
   const cat=catById(r.item.categoryId);
-  const hasMemo=!!(r.item.notes&&r.item.notes.trim());const hasLink=!!r.item.link;
+  const hasMemo=!!(r.item.notes&&r.item.notes.trim());const hasLink=!!r.item.link;const hasLink2=!!r.item.link2;
   const memoBtn=`<button class="ic-memo ${hasMemo?'has':'empty'}" style="width:24px;height:24px" onclick="event.stopPropagation();openMemo('${r.item.id}')">${MEMO_SVG}</button>`;
   const linkBtn=hasLink?`<a class="tc-link" href="${esc(r.item.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${LINK_SVG}</a>`:'';
+  const link2Btn=hasLink2?`<a class="tc-link2" href="${esc(r.item.link2)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${LINK_SVG}</a>`:'';
   const clickKey=schedMode==='shift'?r.step:`'${r.date}'`;
   return`<div class="tcard ${overdue?'overdue':''}">
     <button class="chk" onclick="tglToday('${r.item.id}',${clickKey})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></button>
     <div class="tc-body"><span class="ic-cat ${catCC(cat)}">${cat?esc(cat.name):'未分類'}</span><div class="tc-nm">${esc(r.item.name)}</div><div class="tc-mt">${overdue?fS(r.date)+' の予定 · '+r.label:r.label}</div></div>
-    ${memoBtn}${linkBtn}
+    ${memoBtn}${linkBtn}${link2Btn}
   </div>`;
 }
 function tglToday(id,stepOrDate){const item=S.items.find(i=>i.id===id);if(item)toggleComplete(item,stepOrDate)}
@@ -649,6 +714,7 @@ function openMemo(id){
   $('memo-pop-title').textContent=item.name;$('memo-pop-text').value=item.notes||'';
   let icons='';
   if(item.link)icons+=`<a class="ic-link" href="${esc(item.link)}" target="_blank" rel="noopener" style="width:30px;height:30px">${LINK_SVG}</a>`;
+  if(item.link2)icons+=`<a class="ic-link2" href="${esc(item.link2)}" target="_blank" rel="noopener" style="width:30px;height:30px">${LINK_SVG}</a>`;
   icons+=`<button class="ic-memo has" onclick="openDet('${id}');closeMemo()" style="width:30px;height:30px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
   $('memo-pop-icons').innerHTML=icons;
   $('memo-pop').classList.add('show');document.body.style.overflow='hidden';
@@ -744,17 +810,24 @@ function openAdd(){
   const sel=$('a-cat');let o=S.categories.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
   o+='<option value="__new__">+ 新しいカテゴリー</option>';sel.innerHTML=o;
   $('a-ncf').style.display=S.categories.length===0?'block':'none';
-  if(!S.categories.length)sel.value='__new__';$('a-nc').value='';$('a-nm').value='';$('a-dt').value=todayStr();$('a-memo').value='';$('a-link').value='';
+  if(!S.categories.length)sel.value='__new__';$('a-nc').value='';$('a-nm').value='';$('a-dt').value=todayStr();$('a-memo').value='';$('a-link').value='';if($('a-link2'))$('a-link2').value='';
   sel.onchange=()=>{$('a-ncf').style.display=sel.value==='__new__'?'block':'none'};
   showM('m-add');setTimeout(()=>$('a-nm').focus(),300);
 }
-function submitAdd(){
+function submitAdd(keepOpen){
   let cid=$('a-cat').value;const nm=$('a-nm').value.trim(),dt=$('a-dt').value;
-  const memo=$('a-memo').value.trim(),link=$('a-link').value.trim();
+  const memo=$('a-memo').value.trim(),link=$('a-link').value.trim(),link2=$('a-link2')?$('a-link2').value.trim():'';
   if(!nm||!dt)return;
   if(cid==='__new__'){const cn=$('a-nc').value.trim();if(!cn)return;const nc={id:uid(),name:cn,cc:CC[S.categories.length%CC.length]};S.categories.push(nc);cid=nc.id}
-  commit('項目追加');S.items.push({id:uid(),categoryId:cid,name:nm,learnDate:dt,doneDates:[],completions:[],notes:memo,link:link});
-  save();closeM(null,'m-add');render();
+  commit('項目追加');S.items.push({id:uid(),categoryId:cid,name:nm,learnDate:dt,doneDates:[],completions:[],notes:memo,link:link,link2:link2});
+  save();render();
+  if(keepOpen){
+    // Clear name, memo, link but keep category and date
+    $('a-nm').value='';$('a-memo').value='';$('a-link').value='';if($('a-link2'))$('a-link2').value='';
+    $('a-nm').focus();
+  }else{
+    closeM(null,'m-add');
+  }
 }
 
 // ═══ Detail ═══
@@ -764,7 +837,7 @@ function openDet(id){
   opts+='<option value="__new__">+ 新しいカテゴリー</option>';$('d-cat').innerHTML=opts;
   $('d-ncf').style.display='none';$('d-nc').value='';
   $('d-cat').onchange=()=>{$('d-ncf').style.display=$('d-cat').value==='__new__'?'block':'none'};
-  $('d-nm').value=item.name;$('d-dt').value=item.learnDate;$('d-memo').value=item.notes||'';$('d-link').value=item.link||'';
+  $('d-nm').value=item.name;$('d-dt').value=item.learnDate;$('d-memo').value=item.notes||'';$('d-link').value=item.link||'';if($('d-link2'))$('d-link2').value=item.link2||'';
   showM('m-det');
 }
 function saveDet(){
@@ -774,7 +847,7 @@ function saveDet(){
     const nc={id:uid(),name:cn,cc:CC[S.categories.length%CC.length]};S.categories.push(nc);catId=nc.id}
   item.categoryId=catId||item.categoryId;item.name=nm;
   const nd=$('d-dt').value;if(item.learnDate!==nd){item.learnDate=nd;item.doneDates=[];item.completions=[]}
-  item.notes=$('d-memo').value.trim();item.link=$('d-link').value.trim();
+  item.notes=$('d-memo').value.trim();item.link=$('d-link').value.trim();item.link2=$('d-link2')?$('d-link2').value.trim():'';
   save();closeM(null,'m-det');render();
 }
 function markAllPast(){
@@ -801,8 +874,42 @@ function impData(e){const f=e.target.files[0];if(!f)return;const r=new FileReade
     commit('インポート');S={categories:p.categories,items:p.items};ensureFields();save();closeM(null,'m-set');render()}catch{alert('インポート失敗')}};r.readAsText(f);e.target.value=''}
 function resetAll(){if(!confirm('すべて消去しますか?'))return;commit('全消去');S={categories:[],items:[]};save();closeM(null,'m-set');go('table')}
 
+// ═══ Auto Sync ═══
+let syncBusy=false;
+function setSyncDot(state){const d=$('sync-dot');if(!d)return;d.className='sync-dot '+state}
+async function autoSyncPush(){
+  const url=localStorage.getItem('taliyo-sync-url');if(!url||syncBusy)return;
+  syncBusy=true;setSyncDot('syncing');
+  try{
+    let frame=document.getElementById('sync-frame');if(!frame){frame=document.createElement('iframe');frame.id='sync-frame';frame.name='sync-frame';frame.style.display='none';document.body.appendChild(frame)}
+    const form=document.createElement('form');form.method='POST';form.action=url;form.target='sync-frame';
+    const inp=document.createElement('textarea');inp.name='data';inp.value=JSON.stringify(S);form.appendChild(inp);document.body.appendChild(form);form.submit();document.body.removeChild(form);
+    setTimeout(()=>{setSyncDot('synced');syncBusy=false;setTimeout(()=>{const d=$('sync-dot');if(d&&d.className==='sync-dot synced')d.className='sync-dot'},3000)},2500);
+  }catch(e){setSyncDot('err');syncBusy=false}
+}
+async function autoSyncPull(){
+  const url=localStorage.getItem('taliyo-sync-url');if(!url||syncBusy)return;
+  syncBusy=true;setSyncDot('syncing');
+  try{
+    const res=await fetch(url);if(!res.ok)throw 0;
+    const d=await res.json();
+    if(d.categories&&d.items&&d.items.length>0){
+      // Only pull if remote has more data or different data
+      const localStr=JSON.stringify({c:S.categories.length,i:S.items.length});
+      const remoteStr=JSON.stringify({c:(d.categories||[]).length,i:(d.items||[]).length});
+      if(localStr!==remoteStr||S.items.length===0){
+        S={categories:d.categories,items:d.items};ensureFields();save();render();
+      }
+    }
+    setSyncDot('synced');setTimeout(()=>{const dot=$('sync-dot');if(dot&&dot.className==='sync-dot synced')dot.className='sync-dot'},3000);
+  }catch(e){setSyncDot('err')}
+  syncBusy=false;
+}
+
 // ═══ Init ═══
 load();go('table');
+// Auto-pull on startup
+setTimeout(autoSyncPull,1000);
 </script>
 </body>
 </html>
