@@ -361,24 +361,22 @@ function commit(label){pushH(label);save()}
 function render(){if(curView==='table')renderTable();if(curView==='today')renderToday();if(curView==='stats')renderStats()}
 function ensureFields(){
   for(const it of S.items){
-    if(!it.doneDates) it.doneDates=[];if(!it.link2) it.link2='';if(!it.link3) it.link3='';
+    if(!it.doneDates) it.doneDates=[];
+    if(!it.link2) it.link2='';
+    if(!it.link3) it.link3='';
     if(!it.completions) it.completions=[];
     const fixedDates=CUM.map(off=>addD(it.learnDate,off));
-    // Rebuild completions from doneDates if completions is empty but doneDates has data
-    if(it.completions.length===0 && it.doneDates.length>0){
-      for(let i=0;i<fixedDates.length;i++){
-        if(it.doneDates.indexOf(fixedDates[i])>=0){
-          it.completions.push({step:i, doneOn:fixedDates[i]});
-        }
+    // ALWAYS sync: add missing completions from doneDates
+    for(let i=0;i<fixedDates.length;i++){
+      if(it.doneDates.indexOf(fixedDates[i])>=0 && !it.completions.find(c=>c.step===i)){
+        it.completions.push({step:i, doneOn:fixedDates[i]});
       }
     }
-    // Rebuild doneDates from completions if doneDates is empty but completions has data
-    if(it.doneDates.length===0 && it.completions.length>0){
-      for(const c of it.completions){
-        if(c.step<16){
-          const d=fixedDates[c.step];
-          if(it.doneDates.indexOf(d)<0) it.doneDates.push(d);
-        }
+    // ALWAYS sync: add missing doneDates from completions
+    for(const c of it.completions){
+      if(c.step<16){
+        const d=fixedDates[c.step];
+        if(it.doneDates.indexOf(d)<0) it.doneDates.push(d);
       }
     }
   }
