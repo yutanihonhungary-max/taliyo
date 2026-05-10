@@ -160,18 +160,12 @@ textarea.inp{min-height:60px;resize:vertical;line-height:1.4}
 .br{display:flex;gap:6px;margin-top:6px}.br .btn{flex:1}
 
 /* Link clip icon */
-.ic-link{width:28px;height:28px;border-radius:50%;background:rgba(108,92,231,.15);border:none;color:#a5b4fc;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
-.ic-link:active{background:rgba(108,92,231,.3)}
-.ic-link svg{width:14px;height:14px}
-.ic-link2{width:28px;height:28px;border-radius:50%;background:rgba(251,146,60,.15);border:none;color:#fb923c;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
-.ic-link2:active{background:rgba(251,146,60,.3)}
-.ic-link2 svg{width:14px;height:14px}
-.tc-link{width:26px;height:26px;border-radius:50%;background:rgba(108,92,231,.12);border:none;color:#a5b4fc;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
-.tc-link:active{background:rgba(108,92,231,.25)}
-.tc-link svg{width:13px;height:13px}
-.tc-link2{width:26px;height:26px;border-radius:50%;background:rgba(251,146,60,.12);border:none;color:#fb923c;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0}
-.tc-link2:active{background:rgba(251,146,60,.25)}
-.tc-link2 svg{width:13px;height:13px}
+/* Service link icons */
+.svc-link{width:28px;height:28px;border-radius:7px;border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;text-decoration:none;overflow:hidden}
+.svc-link svg{width:28px;height:28px}
+.svc-link:active{opacity:.7;transform:scale(.9)}
+.svc-link-sm{width:24px;height:24px;border-radius:6px}
+.svc-link-sm svg{width:24px;height:24px}
 .sync-ind{position:relative}
 .sync-dot{width:7px;height:7px;border-radius:50%;position:absolute;top:-1px;right:-1px;display:none}
 .sync-dot.syncing{display:block;background:#fbbf24;animation:pulse 1s infinite}
@@ -265,8 +259,9 @@ textarea.inp{min-height:60px;resize:vertical;line-height:1.4}
 <div class="fld"><label class="fl">項目名</label><input class="inp" id="a-nm" placeholder="例: 1：宅地建物取引業の意味" maxlength="60"></div>
 <div class="fld"><label class="fl">学習日</label><input class="inp" id="a-dt" type="date"></div>
 <div class="fld"><label class="fl">メモ</label><textarea class="inp" id="a-memo" placeholder="覚え方やポイント"></textarea></div>
-<div class="fld"><label class="fl">リンク1</label><input class="inp" id="a-link" placeholder="https://..." type="url"></div>
-<div class="fld"><label class="fl">リンク2</label><input class="inp" id="a-link2" placeholder="https://..." type="url"></div>
+<div class="fld"><label class="fl" style="color:#CC8F59">Claude</label><input class="inp" id="a-link" placeholder="https://claude.ai/..." type="url"></div>
+<div class="fld"><label class="fl" style="color:#8AB4F8">NotebookLM</label><input class="inp" id="a-link2" placeholder="https://notebooklm.google.com/..." type="url"></div>
+<div class="fld"><label class="fl" style="color:#4285F4">Google Document</label><input class="inp" id="a-link3" placeholder="https://docs.google.com/..." type="url"></div>
 <div class="br"><button class="btn bs" onclick="closeM(null,'m-add')">キャンセル</button><button class="btn btn-continue" onclick="submitAdd(true)">追加して続ける</button><button class="btn bp" onclick="submitAdd(false)">追加</button></div>
 </div></div>
 
@@ -278,8 +273,9 @@ textarea.inp{min-height:60px;resize:vertical;line-height:1.4}
 <div class="fld"><label class="fl">項目名</label><input class="inp" id="d-nm" maxlength="60"></div>
 <div class="fld"><label class="fl">学習日</label><input class="inp" id="d-dt" type="date"></div>
 <div class="fld"><label class="fl">メモ</label><textarea class="inp" id="d-memo" placeholder="メモ"></textarea></div>
-<div class="fld"><label class="fl">リンク1</label><input class="inp" id="d-link" type="url" placeholder="https://..."></div>
-<div class="fld"><label class="fl">リンク2</label><input class="inp" id="d-link2" type="url" placeholder="https://..."></div>
+<div class="fld"><label class="fl" style="color:#CC8F59">Claude</label><input class="inp" id="d-link" type="url" placeholder="https://claude.ai/..."></div>
+<div class="fld"><label class="fl" style="color:#8AB4F8">NotebookLM</label><input class="inp" id="d-link2" type="url" placeholder="https://notebooklm.google.com/..."></div>
+<div class="fld"><label class="fl" style="color:#4285F4">Google Document</label><input class="inp" id="d-link3" type="url" placeholder="https://docs.google.com/..."></div>
 <div class="fld"><label class="fl">過去をすべて完了</label><button class="btn bs" onclick="markAllPast()" style="font-size:12px;padding:8px">過去の未完了をすべてチェック</button></div>
 <div class="br"><button class="btn bs" onclick="closeM(null,'m-det')">閉じる</button><button class="btn bp" onclick="saveDet()">保存</button></div>
 <button class="btn bd" style="margin-top:8px" onclick="delItem()">この項目を削除</button>
@@ -368,7 +364,7 @@ function commit(label){pushH(label);save()}
 function render(){if(curView==='table')renderTable();if(curView==='today')renderToday();if(curView==='stats')renderStats()}
 function ensureFields(){
   for(const it of S.items){
-    if(!it.doneDates) it.doneDates=[];if(!it.link2) it.link2='';
+    if(!it.doneDates) it.doneDates=[];if(!it.link2) it.link2='';if(!it.link3) it.link3='';
     if(!it.completions) it.completions=[];
     const fixedDates=CUM.map(off=>addD(it.learnDate,off));
     // Rebuild completions from doneDates if completions is empty but doneDates has data
@@ -496,6 +492,10 @@ function toggleComplete(item,stepOrDate){
   save();render();
 }
 
+// Service logos (official simplified SVGs)
+const CLAUDE_ICON='<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="96" fill="#F7F0E8"/><g transform="translate(256 256)" fill="#D97745"><ellipse cx="0" cy="-118" rx="34" ry="112" transform="rotate(0)"/><ellipse cx="0" cy="-118" rx="34" ry="112" transform="rotate(45)"/><ellipse cx="0" cy="-118" rx="34" ry="112" transform="rotate(90)"/><ellipse cx="0" cy="-118" rx="34" ry="112" transform="rotate(135)"/><ellipse cx="0" cy="-118" rx="34" ry="112" transform="rotate(180)"/><ellipse cx="0" cy="-118" rx="34" ry="112" transform="rotate(225)"/><ellipse cx="0" cy="-118" rx="34" ry="112" transform="rotate(270)"/><ellipse cx="0" cy="-118" rx="34" ry="112" transform="rotate(315)"/></g><circle cx="256" cy="256" r="54" fill="#F7F0E8"/><circle cx="256" cy="256" r="26" fill="#D97745"/></svg>';
+const NLM_ICON='<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="96" fill="#F8FAFC"/><rect x="132" y="84" width="264" height="344" rx="32" fill="#1A73E8"/><rect x="164" y="84" width="232" height="344" rx="32" fill="#E8F0FE"/><path d="M184 136h164v36H184zM184 206h164v24H184zM184 258h116v24H184z" fill="#1A73E8" opacity=".95"/><path d="M364 250l14 42 42 14-42 14-14 42-14-42-42-14 42-14z" fill="#34A853"/><path d="M116 164h44v28h-44zM116 224h44v28h-44zM116 284h44v28h-44z" fill="#174EA6"/></svg>';
+const GDOC_ICON='<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="96" fill="#F8FAFC"/><path d="M152 64h152l88 88v296H152z" fill="#4285F4"/><path d="M304 64v88h88z" fill="#AECBFA"/><path d="M192 224h160v24H192zM192 276h160v24H192zM192 328h120v24H192z" fill="#FFF"/></svg>';
 const LINK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
 const MEMO_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
 
@@ -558,17 +558,18 @@ function renderTable(){
     if(hasOverdue)badges+=`<span class="ic-badge overdue">${schedMode==='shift'?'要復習':'未完了'}</span>`;
     if(hasToday)badges+=`<span class="ic-badge today">今日</span>`;
     if(allDone)badges+=`<span class="ic-badge done-all">✓</span>`;
-    const hasMemo=!!(item.notes&&item.notes.trim());const hasLink=!!item.link;const hasLink2=!!item.link2;
+    const hasMemo=!!(item.notes&&item.notes.trim());const hasLink=!!item.link;const hasLink2=!!item.link2;const hasLink3=!!item.link3;
     const memoBtn=`<button class="ic-memo ${hasMemo?'has':'empty'}" onclick="event.stopPropagation();openMemo('${item.id}')">${MEMO_SVG}</button>`;
-    const linkBtn=hasLink?`<a class="ic-link" href="${esc(item.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${LINK_SVG}</a>`:'';
-    const link2Btn=hasLink2?`<a class="ic-link2" href="${esc(item.link2)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${LINK_SVG}</a>`:'';
+    const linkBtn=hasLink?`<a class="svc-link svc-claude" href="${esc(item.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${CLAUDE_ICON}</a>`:'';
+    const link2Btn=hasLink2?`<a class="svc-link svc-nlm" href="${esc(item.link2)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${NLM_ICON}</a>`:'';
+    const link3Btn=hasLink3?`<a class="svc-link svc-gdoc" href="${esc(item.link3)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${GDOC_ICON}</a>`:'';
     const compCount=schedMode==='shift'?item.completions.length:item.doneDates.length;
 
     h+=`<div class="icard ${isOpen?'open':''} ${hasMemo?'has-memo':''}">
       <div class="icard-head" onclick="toggleCard('${item.id}')">
         <div class="icard-body"><span class="ic-cat ${catCC(cat)}">${cat?esc(cat.name):''}</span><div class="ic-nm">${esc(item.name)}</div>
         <div class="ic-mt">学習日 ${fS(item.learnDate)} · 完了 ${compCount}回${nxt&&!nxt.projected?' · 次回 '+fS(nxt.date):''}</div></div>
-        ${memoBtn}${linkBtn}${link2Btn}<div class="ic-badges">${badges}</div>
+        ${memoBtn}${linkBtn}${link2Btn}${link3Btn}<div class="ic-badges">${badges}</div>
         <svg class="ic-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </div>`;
     // Progress bar (always visible, even when card is closed)
@@ -660,15 +661,16 @@ function renderToday(){
 }
 function mkTCard(r,overdue){
   const cat=catById(r.item.categoryId);
-  const hasMemo=!!(r.item.notes&&r.item.notes.trim());const hasLink=!!r.item.link;const hasLink2=!!r.item.link2;
+  const hasMemo=!!(r.item.notes&&r.item.notes.trim());const hasLink=!!r.item.link;const hasLink2=!!r.item.link2;const hasLink3=!!r.item.link3;
   const memoBtn=`<button class="ic-memo ${hasMemo?'has':'empty'}" style="width:24px;height:24px" onclick="event.stopPropagation();openMemo('${r.item.id}')">${MEMO_SVG}</button>`;
-  const linkBtn=hasLink?`<a class="tc-link" href="${esc(r.item.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${LINK_SVG}</a>`:'';
-  const link2Btn=hasLink2?`<a class="tc-link2" href="${esc(r.item.link2)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${LINK_SVG}</a>`:'';
+  const linkBtn=hasLink?`<a class="svc-link svc-link-sm svc-claude" href="${esc(r.item.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${CLAUDE_ICON}</a>`:'';
+  const link2Btn=hasLink2?`<a class="svc-link svc-link-sm svc-nlm" href="${esc(r.item.link2)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${NLM_ICON}</a>`:'';
+  const link3Btn=hasLink3?`<a class="svc-link svc-link-sm svc-gdoc" href="${esc(r.item.link3)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${GDOC_ICON}</a>`:'';
   const clickKey=schedMode==='shift'?r.step:`'${r.date}'`;
   return`<div class="tcard ${overdue?'overdue':''}">
     <button class="chk" onclick="tglToday('${r.item.id}',${clickKey})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></button>
     <div class="tc-body"><span class="ic-cat ${catCC(cat)}">${cat?esc(cat.name):'未分類'}</span><div class="tc-nm">${esc(r.item.name)}</div><div class="tc-mt">${overdue?fS(r.date)+' の予定 · '+r.label:r.label}</div></div>
-    ${memoBtn}${linkBtn}${link2Btn}
+    ${memoBtn}${linkBtn}${link2Btn}${link3Btn}
   </div>`;
 }
 function tglToday(id,stepOrDate){const item=S.items.find(i=>i.id===id);if(item)toggleComplete(item,stepOrDate)}
@@ -716,8 +718,9 @@ function openMemo(id){
   const item=S.items.find(i=>i.id===id);if(!item)return;memoItemId=id;
   $('memo-pop-title').textContent=item.name;$('memo-pop-text').value=item.notes||'';
   let icons='';
-  if(item.link)icons+=`<a class="ic-link" href="${esc(item.link)}" target="_blank" rel="noopener" style="width:30px;height:30px">${LINK_SVG}</a>`;
-  if(item.link2)icons+=`<a class="ic-link2" href="${esc(item.link2)}" target="_blank" rel="noopener" style="width:30px;height:30px">${LINK_SVG}</a>`;
+  if(item.link)icons+=`<a class="svc-link svc-claude" href="${esc(item.link)}" target="_blank" rel="noopener" style="width:30px;height:30px;border-radius:8px">${CLAUDE_ICON}</a>`;
+  if(item.link2)icons+=`<a class="svc-link svc-nlm" href="${esc(item.link2)}" target="_blank" rel="noopener" style="width:30px;height:30px;border-radius:8px">${NLM_ICON}</a>`;
+  if(item.link3)icons+=`<a class="svc-link svc-gdoc" href="${esc(item.link3)}" target="_blank" rel="noopener" style="width:30px;height:30px;border-radius:8px">${GDOC_ICON}</a>`;
   icons+=`<button class="ic-memo has" onclick="openDet('${id}');closeMemo()" style="width:30px;height:30px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
   $('memo-pop-icons').innerHTML=icons;
   $('memo-pop').classList.add('show');document.body.style.overflow='hidden';
@@ -813,20 +816,20 @@ function openAdd(){
   const sel=$('a-cat');let o=S.categories.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
   o+='<option value="__new__">+ 新しいカテゴリー</option>';sel.innerHTML=o;
   $('a-ncf').style.display=S.categories.length===0?'block':'none';
-  if(!S.categories.length)sel.value='__new__';$('a-nc').value='';$('a-nm').value='';$('a-dt').value=todayStr();$('a-memo').value='';$('a-link').value='';if($('a-link2'))$('a-link2').value='';
+  if(!S.categories.length)sel.value='__new__';$('a-nc').value='';$('a-nm').value='';$('a-dt').value=todayStr();$('a-memo').value='';$('a-link').value='';if($('a-link2'))$('a-link2').value='';if($('a-link3'))$('a-link3').value='';
   sel.onchange=()=>{$('a-ncf').style.display=sel.value==='__new__'?'block':'none'};
   showM('m-add');setTimeout(()=>$('a-nm').focus(),300);
 }
 function submitAdd(keepOpen){
   let cid=$('a-cat').value;const nm=$('a-nm').value.trim(),dt=$('a-dt').value;
-  const memo=$('a-memo').value.trim(),link=$('a-link').value.trim(),link2=$('a-link2')?$('a-link2').value.trim():'';
+  const memo=$('a-memo').value.trim(),link=$('a-link').value.trim(),link2=$('a-link2')?$('a-link2').value.trim():'',link3=$('a-link3')?$('a-link3').value.trim():'';
   if(!nm||!dt)return;
   if(cid==='__new__'){const cn=$('a-nc').value.trim();if(!cn)return;const nc={id:uid(),name:cn,cc:CC[S.categories.length%CC.length]};S.categories.push(nc);cid=nc.id}
-  commit('項目追加');S.items.push({id:uid(),categoryId:cid,name:nm,learnDate:dt,doneDates:[],completions:[],notes:memo,link:link,link2:link2});
+  commit('項目追加');S.items.push({id:uid(),categoryId:cid,name:nm,learnDate:dt,doneDates:[],completions:[],notes:memo,link:link,link2:link2,link3:link3});
   save();render();
   if(keepOpen){
     // Clear name, memo, link but keep category and date
-    $('a-nm').value='';$('a-memo').value='';$('a-link').value='';if($('a-link2'))$('a-link2').value='';
+    $('a-nm').value='';$('a-memo').value='';$('a-link').value='';if($('a-link2'))$('a-link2').value='';if($('a-link3'))$('a-link3').value='';
     $('a-nm').focus();
   }else{
     closeM(null,'m-add');
@@ -840,7 +843,7 @@ function openDet(id){
   opts+='<option value="__new__">+ 新しいカテゴリー</option>';$('d-cat').innerHTML=opts;
   $('d-ncf').style.display='none';$('d-nc').value='';
   $('d-cat').onchange=()=>{$('d-ncf').style.display=$('d-cat').value==='__new__'?'block':'none'};
-  $('d-nm').value=item.name;$('d-dt').value=item.learnDate;$('d-memo').value=item.notes||'';$('d-link').value=item.link||'';if($('d-link2'))$('d-link2').value=item.link2||'';
+  $('d-nm').value=item.name;$('d-dt').value=item.learnDate;$('d-memo').value=item.notes||'';$('d-link').value=item.link||'';if($('d-link2'))$('d-link2').value=item.link2||'';if($('d-link3'))$('d-link3').value=item.link3||'';
   showM('m-det');
 }
 function saveDet(){
@@ -850,7 +853,7 @@ function saveDet(){
     const nc={id:uid(),name:cn,cc:CC[S.categories.length%CC.length]};S.categories.push(nc);catId=nc.id}
   item.categoryId=catId||item.categoryId;item.name=nm;
   const nd=$('d-dt').value;if(item.learnDate!==nd){item.learnDate=nd;item.doneDates=[];item.completions=[]}
-  item.notes=$('d-memo').value.trim();item.link=$('d-link').value.trim();item.link2=$('d-link2')?$('d-link2').value.trim():'';
+  item.notes=$('d-memo').value.trim();item.link=$('d-link').value.trim();item.link2=$('d-link2')?$('d-link2').value.trim():'';item.link3=$('d-link3')?$('d-link3').value.trim():'';
   save();closeM(null,'m-det');render();
 }
 function markAllPast(){
@@ -870,7 +873,7 @@ function delItem(){const idx=S.items.findIndex(i=>i.id===detId);if(idx<0)return;
 const TPL=['1：宅地建物取引業の意味','2：免許制度','3：免許基準','4：宅地建物取引業者の手続き','5：宅地建物取引士制度','6：営業保証金','7：弁済業務保証金(保証協会)','8：取引の諸規定','9：媒介契約の規制','10：重要事項の説明','11：37条書面','12：8種規制','13：報酬','14：監督・罰則','15：住宅瑕疵担保履行法'];
 function loadTpl(){if(!confirm('宅建業法15項目を追加しますか?'))return;commit('テンプレート追加');let cat=S.categories.find(c=>c.name==='宅建業法');
   if(!cat){cat={id:uid(),name:'宅建業法',cc:CC[S.categories.length%CC.length]};S.categories.push(cat)}
-  const t=todayStr();TPL.forEach(n=>S.items.push({id:uid(),categoryId:cat.id,name:n,learnDate:t,doneDates:[],completions:[],notes:'',link:''}));save();closeM(null,'m-set');render()}
+  const t=todayStr();TPL.forEach(n=>S.items.push({id:uid(),categoryId:cat.id,name:n,learnDate:t,doneDates:[],completions:[],notes:'',link:'',link2:'',link3:''}));save();closeM(null,'m-set');render()}
 function expData(){const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`taliyo-${todayStr()}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a)}
 function impData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=ev=>{try{const p=JSON.parse(ev.target.result);if(!p.categories||!p.items)throw 0;
