@@ -257,8 +257,12 @@ textarea.inp{min-height:60px;resize:vertical;line-height:1.4}
 <div class="fld"><label class="fl">学習日</label><input class="inp" id="a-dt" type="date"></div>
 <div class="fld"><label class="fl">メモ</label><textarea class="inp" id="a-memo" placeholder="覚え方やポイント"></textarea></div>
 <div class="fld"><label class="fl" style="color:#CC8F59">Claude</label><input class="inp" id="a-link" placeholder="https://claude.ai/..." type="url"></div>
+<div class="fld"><label class="fl" style="color:#10A37F">ChatGPT</label><input class="inp" id="a-link5" placeholder="https://chatgpt.com/..." type="url"></div>
 <div class="fld"><label class="fl" style="color:#8AB4F8">NotebookLM</label><input class="inp" id="a-link2" placeholder="https://notebooklm.google.com/..." type="url"></div>
+<div class="fld"><label class="fl" style="color:#4893FC">Gemini</label><input class="inp" id="a-link6" placeholder="https://gemini.google.com/..." type="url"></div>
+<div class="fld"><label class="fl" style="color:#A0A0A0">Genspark</label><input class="inp" id="a-link7" placeholder="https://www.genspark.ai/..." type="url"></div>
 <div class="fld"><label class="fl" style="color:#4285F4">Google Document</label><input class="inp" id="a-link3" placeholder="https://docs.google.com/..." type="url"></div>
+<div class="fld"><label class="fl" style="color:#53A7FF">GoodNotes</label><input class="inp" id="a-link4" placeholder="goodnotes://..." type="url"></div>
 <div class="br"><button class="btn bs" onclick="closeM(null,'m-add')">キャンセル</button><button class="btn btn-continue" onclick="submitAdd(true)">追加して続ける</button><button class="btn bp" onclick="submitAdd(false)">追加</button></div>
 </div></div>
 
@@ -271,8 +275,12 @@ textarea.inp{min-height:60px;resize:vertical;line-height:1.4}
 <div class="fld"><label class="fl">学習日</label><input class="inp" id="d-dt" type="date"></div>
 <div class="fld"><label class="fl">メモ</label><textarea class="inp" id="d-memo" placeholder="メモ"></textarea></div>
 <div class="fld"><label class="fl" style="color:#CC8F59">Claude</label><input class="inp" id="d-link" type="url" placeholder="https://claude.ai/..."></div>
+<div class="fld"><label class="fl" style="color:#10A37F">ChatGPT</label><input class="inp" id="d-link5" type="url" placeholder="https://chatgpt.com/..."></div>
 <div class="fld"><label class="fl" style="color:#8AB4F8">NotebookLM</label><input class="inp" id="d-link2" type="url" placeholder="https://notebooklm.google.com/..."></div>
+<div class="fld"><label class="fl" style="color:#4893FC">Gemini</label><input class="inp" id="d-link6" type="url" placeholder="https://gemini.google.com/..."></div>
+<div class="fld"><label class="fl" style="color:#A0A0A0">Genspark</label><input class="inp" id="d-link7" type="url" placeholder="https://www.genspark.ai/..."></div>
 <div class="fld"><label class="fl" style="color:#4285F4">Google Document</label><input class="inp" id="d-link3" type="url" placeholder="https://docs.google.com/..."></div>
+<div class="fld"><label class="fl" style="color:#53A7FF">GoodNotes</label><input class="inp" id="d-link4" type="url" placeholder="goodnotes://..."></div>
 <div class="fld"><label class="fl">過去をすべて完了</label><button class="btn bs" onclick="markAllPast()" style="font-size:12px;padding:8px">過去の未完了をすべてチェック</button></div>
 <div class="br"><button class="btn bs" onclick="closeM(null,'m-det')">閉じる</button><button class="btn bp" onclick="saveDet()">保存</button></div>
 <button class="btn bd" style="margin-top:8px" onclick="delItem()">この項目を削除</button>
@@ -363,7 +371,8 @@ function ensureFields(){
   for(const it of S.items){
     if(!it.doneDates) it.doneDates=[];
     if(!it.link2) it.link2='';
-    if(!it.link3) it.link3='';
+    if(!it.link3) it.link3='';if(!it.link4) it.link4='';
+    if(!it.link5) it.link5='';if(!it.link6) it.link6='';if(!it.link7) it.link7='';
     if(!it.completions) it.completions=[];
     const fixedDates=CUM.map(off=>addD(it.learnDate,off));
     // ALWAYS sync: add missing completions from doneDates
@@ -489,8 +498,15 @@ function toggleComplete(item,stepOrDate){
 
 // Service logos (official simplified SVGs)
 const CLAUDE_ICON='<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="96" fill="#F7F0E8"/><g transform="translate(256 256)" fill="#D97745"><ellipse cx="0" cy="-118" rx="34" ry="112" transform="rotate(0)"/><ellipse cx="0" cy="-118" rx="34" ry="112" transform="rotate(45)"/><ellipse cx="0" cy="-118" rx="34" ry="112" transform="rotate(90)"/><ellipse cx="0" cy="-118" rx="34" ry="112" transform="rotate(135)"/><ellipse cx="0" cy="-118" rx="34" ry="112" transform="rotate(180)"/><ellipse cx="0" cy="-118" rx="34" ry="112" transform="rotate(225)"/><ellipse cx="0" cy="-118" rx="34" ry="112" transform="rotate(270)"/><ellipse cx="0" cy="-118" rx="34" ry="112" transform="rotate(315)"/></g><circle cx="256" cy="256" r="54" fill="#F7F0E8"/><circle cx="256" cy="256" r="26" fill="#D97745"/></svg>';
-const NLM_ICON='<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="96" fill="#F8FAFC"/><rect x="132" y="84" width="264" height="344" rx="32" fill="#1A73E8"/><rect x="164" y="84" width="232" height="344" rx="32" fill="#E8F0FE"/><path d="M184 136h164v36H184zM184 206h164v24H184zM184 258h116v24H184z" fill="#1A73E8" opacity=".95"/><path d="M364 250l14 42 42 14-42 14-14 42-14-42-42-14 42-14z" fill="#34A853"/><path d="M116 164h44v28h-44zM116 224h44v28h-44zM116 284h44v28h-44z" fill="#174EA6"/></svg>';
+const NLM_ICON='<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="96" fill="#F1F3F4"/><path d="M256.011719 114.753906C167.050781 114.753906 94.945312 186.261719 94.945312 274.507812L94.945312 350.988281L124.628906 350.988281L124.628906 343.359375C124.628906 307.574219 153.867188 278.558594 189.941406 278.558594C226.015625 278.558594 255.253906 307.585938 255.253906 343.359375L255.253906 350.988281L284.9375 350.988281L284.9375 343.359375C284.9375 291.308594 242.390625 249.140625 189.929688 249.140625C169.503906 249.140625 150.582031 255.53125 135.082031 266.433594C151.296875 234.464844 184.691406 212.535156 223.242188 212.535156C277.707031 212.535156 321.867188 256.339844 321.867188 310.355469L321.867188 350.996094L351.5625 350.996094L351.5625 310.355469C351.5625 240.074219 294.113281 183.082031 223.242188 183.082031C191.382812 183.082031 162.230469 194.601562 139.785156 213.683594C161.824219 172.375 205.578125 144.214844 256 144.214844C328.566406 144.214844 387.382812 202.550781 387.382812 274.515625L387.382812 350.996094L417.066406 350.996094L417.066406 274.515625C417.066406 186.28125 344.960938 114.761719 256 114.761719Z" fill="#1F1F1F"/></svg>';
 const GDOC_ICON='<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="96" fill="#F8FAFC"/><path d="M152 64h152l88 88v296H152z" fill="#4285F4"/><path d="M304 64v88h88z" fill="#AECBFA"/><path d="M192 224h160v24H192zM192 276h160v24H192zM192 328h120v24H192z" fill="#FFF"/></svg>';
+const GN_ICON='<svg viewBox="0 0 34 34" xmlns="http://www.w3.org/2000/svg"><path d="M32.5311 12.5136C32.7742 3.00022 29.6153 0.769857 20.9541 0.911937C19.0072 0.880857 14.7154 0.883817 12.694 0.910457C-0.154664 0.466458 0.963387 6.83932 0.908226 17.2866C0.800895 28.024 1.03792 32.5425 12.694 32.2761C14.544 32.3027 18.8477 32.3042 20.7678 32.2761C25.3756 32.134 27.7772 32.242 30.307 29.9066C32.1346 28.0462 32.5178 25.2372 32.5311 20.6122C32.5565 18.7074 32.5565 14.3459 32.5311 12.5403V12.5151V12.5136Z" fill="white"/><path d="M16.7438 33.1825C15.2008 33.1825 13.655 33.1765 12.6964 33.1617C7.63686 33.2757 4.53315 32.4972 2.63545 30.6383C0.0385917 28.0927 -0.0538335 23.9029 0.0132495 17.2769C0.0177217 16.4659 0.0132495 15.6726 0.0132495 14.9059C-0.00762082 9.44629 -0.0225289 5.13507 2.68614 2.52731C4.63453 0.652143 7.81872 -0.145574 12.7039 0.021666C14.691 -0.00349397 18.95 -0.00793365 20.9536 0.0231463C26.0057 -0.0582536 28.9708 0.712824 30.8521 2.59835C32.7557 4.50607 33.5503 7.56669 33.4251 12.5232V12.535C33.4504 14.3643 33.4504 18.7525 33.4251 20.6247C33.4101 25.4228 33.0121 28.4257 30.9475 30.5273L30.9161 30.5584C28.3208 32.9545 25.8462 33.0226 21.7482 33.1366C21.4411 33.1455 21.1235 33.1543 20.7956 33.1647C19.8519 33.178 18.3001 33.1854 16.7453 33.1854L16.7438 33.1825Z" fill="#DFDFDF"/><path d="M7.34286 21.0241C7.34138 21.0108 7.3399 20.9989 7.33842 20.9871C7.28027 20.5979 7.33096 20.3477 7.45769 20.1997C7.58589 20.0517 7.80647 20.0059 8.15532 20.0059C8.50417 20.0059 8.72777 20.0503 8.86788 20.1613C9.00953 20.2737 9.05424 20.4543 9.10197 20.7414C9.10197 20.7503 9.10493 20.7592 9.10493 20.7681C9.24805 21.7611 9.70716 22.6847 10.4078 23.4291C10.9356 23.9885 11.5825 24.4636 12.2862 24.7507L12.4173 24.8099C12.4621 24.8277 12.5082 24.841 12.5545 24.8573L12.8288 24.9505C13.0121 25.0112 13.2045 25.0453 13.3908 25.0956C13.5831 25.1222 13.7739 25.1607 13.9677 25.1785L14.2599 25.1977L14.406 25.2081L14.5521 25.2051C15.3317 25.2021 16.1114 25.0482 16.8269 24.7522C17.5425 24.4562 18.179 24.0033 18.6903 23.4424C18.7112 23.4202 18.7306 23.3995 18.7485 23.3803C18.7962 23.3299 18.8424 23.2885 18.8856 23.25C18.9244 23.2086 18.9631 23.1745 19.0034 23.1479C19.0824 23.0931 19.1614 23.0621 19.2508 23.0576C19.4268 23.0473 19.6354 23.1331 19.9202 23.3181C20.2049 23.5031 20.3629 23.657 20.3928 23.8465C20.4077 23.9412 20.3913 24.0433 20.3436 24.1587C20.3197 24.2165 20.2884 24.2786 20.2482 24.3452C20.2049 24.4089 20.1513 24.4725 20.0901 24.5435C20.0663 24.5702 20.0395 24.5998 20.0126 24.6294C19.3209 25.3886 18.4622 25.9925 17.5216 26.3817C16.581 26.7724 15.5702 26.9693 14.5566 26.9737L14.3672 26.9767L14.1779 26.9648L13.7978 26.9397C13.5458 26.916 13.2954 26.8701 13.0435 26.8316C12.7975 26.7695 12.5456 26.7206 12.3041 26.6422L11.9418 26.5193C11.8821 26.4971 11.821 26.4794 11.7614 26.4557L11.5855 26.3787C11.113 26.1849 10.6613 25.9273 10.2498 25.6358C9.83691 25.3427 9.45377 25.0083 9.10641 24.6383C8.64576 24.1469 8.25072 23.586 7.9496 22.9733C7.64848 22.362 7.44424 21.7005 7.34588 21.0285L7.34286 21.0241Z" fill="#00B5D6"/><path d="M20.8254 8.07031C20.8358 8.07031 20.8447 8.07031 20.8537 8.07031C21.5409 8.07475 21.7213 8.26123 21.7213 8.95387C21.7213 9.64651 21.5409 9.83299 20.8537 9.83743C20.8447 9.83743 20.8358 9.83743 20.8254 9.83743H8.20041C8.16909 9.83743 8.13924 9.83743 8.11094 9.83743C7.46245 9.82411 7.29102 9.63023 7.29102 8.95387C7.29102 8.27751 7.46245 8.08363 8.11094 8.07031C8.13924 8.07031 8.16909 8.07031 8.20041 8.07031H17.6844H20.8268H20.8254Z" fill="#00B5D6"/><path d="M18.151 14.2402C18.1585 14.2402 18.1659 14.2402 18.1734 14.2402C18.8606 14.2447 19.041 14.4312 19.041 15.1238C19.041 15.8164 18.8606 16.0029 18.1734 16.0074C18.1659 16.0074 18.1585 16.0074 18.151 16.0074H8.18099C8.15719 16.0074 8.13184 16.0074 8.11094 16.0074C7.46245 15.994 7.29102 15.8002 7.29102 15.1238C7.29102 14.4474 7.46245 14.2536 8.11094 14.2402C8.13332 14.2402 8.15719 14.2402 8.18099 14.2402H15.6689H18.151Z" fill="#00B5D6"/><path fill-rule="evenodd" clip-rule="evenodd" d="M27.6419 7.8413C27.46 7.61042 27.22 7.42098 26.9293 7.29666C26.7341 7.21378 26.5268 7.16493 26.3167 7.15309C25.5593 7.11165 24.8483 7.54974 24.5502 8.24238L20.868 16.7894C20.8338 16.8694 20.795 16.9611 20.7577 17.078C20.7547 17.0854 20.7532 17.0928 20.7503 17.1017C20.7383 17.1402 20.7279 17.1802 20.7175 17.2246C20.6668 17.417 20.637 17.6138 20.631 17.8151L20.6265 17.972C20.6265 17.972 20.6265 17.9838 20.6265 17.9912L20.549 21.1569C20.5445 21.3301 20.637 21.4529 20.7577 21.518C20.7726 21.5269 20.786 21.5358 20.801 21.5417C20.9604 21.6098 21.1378 21.5698 21.2527 21.4559L23.5052 19.2137C23.9926 18.7223 24.1193 18.4278 24.2132 18.2102L27.8909 9.67206L27.8939 9.66466C28.1607 9.03714 28.0429 8.34154 27.6434 7.84278L27.6419 7.8413Z" fill="#111213"/></svg>';
+// Gemini (Google) - official 4-color sparkle icon (2025), on white rounded square background
+const GEM_ICON='<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="gms" x1="35%" y1="65%" x2="80%" y2="20%"><stop offset="0" stop-color="#4893FC"/><stop offset=".27" stop-color="#4893FC"/><stop offset=".777" stop-color="#969DFF"/><stop offset="1" stop-color="#BD99FE"/></linearGradient></defs><rect width="512" height="512" rx="96" fill="#FFFFFF"/><path transform="translate(64 64) scale(6)" d="M32.447 0c.68 0 1.273.465 1.439 1.125a38.9 38.9 0 002 5.905c2.151 5 5.104 9.376 8.854 13.125 3.75 3.75 8.126 6.703 13.125 8.855a39 39 0 005.905 1.999c.66.166 1.125.758 1.125 1.438s-.465 1.273-1.125 1.439a39 39 0 00-5.905 1.999c-5 2.152-9.376 5.105-13.125 8.854-3.75 3.751-6.703 8.126-8.854 13.125a39 39 0 00-2 5.906 1.485 1.485 0 01-1.439 1.124c-.68 0-1.272-.464-1.438-1.125a39 39 0 00-2-5.905c-2.151-5-5.103-9.375-8.854-13.125-3.75-3.749-8.125-6.702-13.125-8.854a39 39 0 00-5.905-2A1.485 1.485 0 010 32.448c0-.68.465-1.272 1.125-1.438a38.9 38.9 0 005.905-2c5-2.151 9.376-5.104 13.125-8.854 3.75-3.749 6.703-8.125 8.855-13.125a39 39 0 002-5.905A1.485 1.485 0 0132.447 0z" fill="url(#gms)"/></svg>';
+// Genspark - official black icon with white sparkles + search bar
+const GSP_ICON='<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M411.05 6h-310.1C48.517 6 6 48.517 6 100.95v310.1c0 52.434 42.517 94.951 94.95 94.951h310.1c52.434 0 94.951-42.517 94.951-94.95v-310.1C506.001 48.516 463.484 6 411.051 6z"/><g fill="#fff"><path d="M425.35 388.2H87.918c-7 0-12.667 5.667-12.667 12.667v26.617c0 7 5.667 12.684 12.667 12.684H425.35c7 0 12.667-5.684 12.667-12.684v-26.617c0-7-5.667-12.666-12.667-12.666zM187.884 333.934c-2.034 0-3.75-1.483-4.067-3.517-13.217-87.383-22.767-95.1-109.517-108.183a5.471 5.471 0 010-10.817c86.284-13.033 93.967-20.75 107-107a5.471 5.471 0 0110.817 0c13.05 86.25 20.75 93.967 107.017 107 2.65.4 4.633 2.7 4.633 5.417 0 2.7-1.983 5-4.633 5.4-86.667 13.083-94.067 20.8-107.184 108.183-.316 1.984-2.033 3.517-4.066 3.517zM352.534 218.317a2.55 2.55 0 01-2.517-2.2c-8.266-54.583-14.266-59.417-68.433-67.583-1.683-.267-2.933-1.667-2.933-3.384a3.434 3.434 0 012.933-3.383c53.9-8.117 58.733-12.95 66.85-66.85.267-1.667 1.667-2.934 3.383-2.934a3.434 3.434 0 013.384 2.934c8.116 53.9 12.95 58.733 66.85 66.85 1.667.267 2.933 1.667 2.933 3.383a3.434 3.434 0 01-2.933 3.384c-54.134 8.166-58.784 13-66.984 67.583a2.579 2.579 0 01-2.533 2.2zM352.084 354.55c-.817 0-1.483-.6-1.617-1.4-5.233-34.733-9.066-37.8-43.533-43-1.083-.183-1.85-1.083-1.85-2.166s.767-1.983 1.85-2.15c34.283-5.2 37.35-8.267 42.533-42.55.184-1.083 1.084-1.85 2.167-1.85 1.083 0 1.983.767 2.167 1.85 5.183 34.283 8.25 37.35 42.533 42.55a2.156 2.156 0 011.85 2.15c0 1.083-.767 1.983-1.85 2.167-34.467 5.2-37.4 8.266-42.633 43-.134.8-.8 1.4-1.617 1.4z"/></g></svg>';
+// ChatGPT (OpenAI) - official knotted/circular logo, white background
+const GPT_ICON='<svg viewBox="0 0 512 510" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M115.612 0h280.775C459.974 0 512 52.026 512 115.612v278.415c0 63.587-52.026 115.613-115.613 115.613H115.612C52.026 509.64 0 457.614 0 394.027V115.612C0 52.026 52.026 0 115.612 0z"/><path d="M412.037 221.764a90.83 90.83 0 004.648-28.67 90.8 90.8 0 00-12.443-45.87c-16.37-28.496-46.738-46.089-79.605-46.089-6.466 0-12.943.683-19.264 2.04a90.77 90.77 0 00-67.881-30.515h-.576c-.059.002-.149.002-.216.002-39.807 0-75.108 25.686-87.346 63.554-25.626 5.239-47.748 21.31-60.682 44.03a91.87 91.87 0 00-12.407 46.077 91.83 91.83 0 0023.694 61.553 90.8 90.8 0 00-4.649 28.67 90.8 90.8 0 0012.442 45.87c16.369 28.504 46.74 46.087 79.61 46.087a91.8 91.8 0 0019.253-2.04 90.78 90.78 0 0067.887 30.516h.576l.234-.001c39.829 0 75.119-25.686 87.357-63.588 25.626-5.242 47.748-21.312 60.682-44.033a91.72 91.72 0 0012.383-46.035 91.83 91.83 0 00-23.693-61.553zM275.102 413.161h-.094a68.15 68.15 0 01-43.611-15.8 57 57 0 002.155-1.221l72.54-41.901a11.8 11.8 0 005.962-10.251V241.651l30.661 17.704c.326.163.55.479.596.84v84.693c-.042 37.653-30.554 68.198-68.21 68.273zm-146.689-62.649a68.13 68.13 0 01-9.152-34.085c0-3.904.341-7.817 1.005-11.663.539.323 1.48.897 2.155 1.285l72.54 41.901a11.83 11.83 0 0011.918-.002l88.563-51.137v35.408a1.1 1.1 0 01-.438.94l-73.33 42.339a68.43 68.43 0 01-34.11 9.12 68.36 68.36 0 01-59.15-34.11zm-19.083-158.36a68.04 68.04 0 0135.538-29.934c0 .625-.036 1.731-.036 2.5v83.801l-.001.07a11.79 11.79 0 005.954 10.242l88.564 51.13-30.661 17.704a1.1 1.1 0 01-1.034.093l-73.337-42.375a68.36 68.36 0 01-34.095-59.143 68.4 68.4 0 019.112-34.085zm251.907 58.621-88.563-51.137 30.661-17.697a1.1 1.1 0 011.034-.094l73.337 42.339c21.109 12.195 34.132 34.746 34.132 59.132 0 28.604-17.849 54.199-44.686 64.078v-86.308c.004-.032.004-.065.004-.096 0-4.219-2.261-8.119-5.919-10.217zm30.518-45.93c-.539-.331-1.48-.898-2.155-1.286l-72.54-41.901a11.84 11.84 0 00-5.958-1.611c-2.092 0-4.15.558-5.957 1.611l-88.564 51.137v-35.408l-.001-.061a1.1 1.1 0 01.44-.88l73.33-42.303a68.3 68.3 0 0134.108-9.129c37.704 0 68.281 30.577 68.281 68.281a68.7 68.7 0 01-.984 11.545zm-191.843 63.109-30.668-17.704a1.09 1.09 0 01-.596-.84v-84.692c.016-37.685 30.593-68.236 68.281-68.236a68.33 68.33 0 0143.689 15.804 63 63 0 00-2.155 1.222l-72.54 41.9a11.79 11.79 0 00-5.961 10.248v.068zm16.655-35.91 39.445-22.782 39.444 22.767v45.55l-39.444 22.767-39.445-22.767z"/></svg>';
 const LINK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
 const MEMO_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
 
@@ -553,18 +569,22 @@ function renderTable(){
     if(hasOverdue)badges+=`<span class="ic-badge overdue">${schedMode==='shift'?'要復習':'未完了'}</span>`;
     if(hasToday)badges+=`<span class="ic-badge today">今日</span>`;
     if(allDone)badges+=`<span class="ic-badge done-all">✓</span>`;
-    const hasMemo=!!(item.notes&&item.notes.trim());const hasLink=!!item.link;const hasLink2=!!item.link2;const hasLink3=!!item.link3;
+    const hasMemo=!!(item.notes&&item.notes.trim());const hasLink=!!item.link;const hasLink2=!!item.link2;const hasLink3=!!item.link3;const hasLink4=!!item.link4;const hasLink5=!!item.link5;const hasLink6=!!item.link6;const hasLink7=!!item.link7;
     const memoBtn=`<button class="ic-memo ${hasMemo?'has':'empty'}" onclick="event.stopPropagation();openMemo('${item.id}')">${MEMO_SVG}</button>`;
     const linkBtn=hasLink?`<a class="svc-link svc-claude" href="${esc(item.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${CLAUDE_ICON}</a>`:'';
+    const link5Btn=hasLink5?`<a class="svc-link svc-gpt" href="${esc(item.link5)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${GPT_ICON}</a>`:'';
     const link2Btn=hasLink2?`<a class="svc-link svc-nlm" href="${esc(item.link2)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${NLM_ICON}</a>`:'';
+    const link6Btn=hasLink6?`<a class="svc-link svc-gem" href="${esc(item.link6)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${GEM_ICON}</a>`:'';
+    const link7Btn=hasLink7?`<a class="svc-link svc-gsp" href="${esc(item.link7)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${GSP_ICON}</a>`:'';
     const link3Btn=hasLink3?`<a class="svc-link svc-gdoc" href="${esc(item.link3)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${GDOC_ICON}</a>`:'';
+    const link4Btn=hasLink4?`<a class="svc-link svc-gn" href="${esc(item.link4)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${GN_ICON}</a>`:'';
     const compCount=schedMode==='shift'?item.completions.length:item.doneDates.length;
 
     h+=`<div class="icard ${isOpen?'open':''} ${hasMemo?'has-memo':''}">
       <div class="icard-head" onclick="toggleCard('${item.id}')">
         <div class="icard-body"><span class="ic-cat ${catCC(cat)}">${cat?esc(cat.name):''}</span><div class="ic-nm">${esc(item.name)}</div>
         <div class="ic-mt">学習日 ${fS(item.learnDate)} · 完了 ${compCount}回${nxt&&!nxt.projected?' · 次回 '+fS(nxt.date):''}</div></div>
-        ${memoBtn}${linkBtn}${link2Btn}${link3Btn}<div class="ic-badges">${badges}</div>
+        ${memoBtn}${linkBtn}${link5Btn}${link2Btn}${link6Btn}${link7Btn}${link3Btn}${link4Btn}<div class="ic-badges">${badges}</div>
         <svg class="ic-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </div>`;
     // Progress bar (always visible, even when card is closed)
@@ -656,16 +676,20 @@ function renderToday(){
 }
 function mkTCard(r,overdue){
   const cat=catById(r.item.categoryId);
-  const hasMemo=!!(r.item.notes&&r.item.notes.trim());const hasLink=!!r.item.link;const hasLink2=!!r.item.link2;const hasLink3=!!r.item.link3;
+  const hasMemo=!!(r.item.notes&&r.item.notes.trim());const hasLink=!!r.item.link;const hasLink2=!!r.item.link2;const hasLink3=!!r.item.link3;const hasLink4=!!r.item.link4;const hasLink5=!!r.item.link5;const hasLink6=!!r.item.link6;const hasLink7=!!r.item.link7;
   const memoBtn=`<button class="ic-memo ${hasMemo?'has':'empty'}" style="width:24px;height:24px" onclick="event.stopPropagation();openMemo('${r.item.id}')">${MEMO_SVG}</button>`;
   const linkBtn=hasLink?`<a class="svc-link svc-link-sm svc-claude" href="${esc(r.item.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${CLAUDE_ICON}</a>`:'';
+  const link5Btn=hasLink5?`<a class="svc-link svc-link-sm svc-gpt" href="${esc(r.item.link5)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${GPT_ICON}</a>`:'';
   const link2Btn=hasLink2?`<a class="svc-link svc-link-sm svc-nlm" href="${esc(r.item.link2)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${NLM_ICON}</a>`:'';
+  const link6Btn=hasLink6?`<a class="svc-link svc-link-sm svc-gem" href="${esc(r.item.link6)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${GEM_ICON}</a>`:'';
+  const link7Btn=hasLink7?`<a class="svc-link svc-link-sm svc-gsp" href="${esc(r.item.link7)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${GSP_ICON}</a>`:'';
   const link3Btn=hasLink3?`<a class="svc-link svc-link-sm svc-gdoc" href="${esc(r.item.link3)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${GDOC_ICON}</a>`:'';
+  const link4Btn=hasLink4?`<a class="svc-link svc-link-sm svc-gn" href="${esc(r.item.link4)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${GN_ICON}</a>`:'';
   const clickKey=schedMode==='shift'?r.step:`'${r.date}'`;
   return`<div class="tcard ${overdue?'overdue':''}">
     <button class="chk" onclick="tglToday('${r.item.id}',${clickKey})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></button>
     <div class="tc-body"><span class="ic-cat ${catCC(cat)}">${cat?esc(cat.name):'未分類'}</span><div class="tc-nm">${esc(r.item.name)}</div><div class="tc-mt">${overdue?fS(r.date)+' の予定 · '+r.label:r.label}</div></div>
-    ${memoBtn}${linkBtn}${link2Btn}${link3Btn}
+    ${memoBtn}${linkBtn}${link5Btn}${link2Btn}${link6Btn}${link7Btn}${link3Btn}${link4Btn}
   </div>`;
 }
 function tglToday(id,stepOrDate){const item=S.items.find(i=>i.id===id);if(item)toggleComplete(item,stepOrDate)}
@@ -714,8 +738,12 @@ function openMemo(id){
   $('memo-pop-title').textContent=item.name;$('memo-pop-text').value=item.notes||'';
   let icons='';
   if(item.link)icons+=`<a class="svc-link svc-claude" href="${esc(item.link)}" target="_blank" rel="noopener" style="width:30px;height:30px;border-radius:8px">${CLAUDE_ICON}</a>`;
+  if(item.link5)icons+=`<a class="svc-link svc-gpt" href="${esc(item.link5)}" target="_blank" rel="noopener" style="width:30px;height:30px;border-radius:8px">${GPT_ICON}</a>`;
   if(item.link2)icons+=`<a class="svc-link svc-nlm" href="${esc(item.link2)}" target="_blank" rel="noopener" style="width:30px;height:30px;border-radius:8px">${NLM_ICON}</a>`;
+  if(item.link6)icons+=`<a class="svc-link svc-gem" href="${esc(item.link6)}" target="_blank" rel="noopener" style="width:30px;height:30px;border-radius:8px">${GEM_ICON}</a>`;
+  if(item.link7)icons+=`<a class="svc-link svc-gsp" href="${esc(item.link7)}" target="_blank" rel="noopener" style="width:30px;height:30px;border-radius:8px">${GSP_ICON}</a>`;
   if(item.link3)icons+=`<a class="svc-link svc-gdoc" href="${esc(item.link3)}" target="_blank" rel="noopener" style="width:30px;height:30px;border-radius:8px">${GDOC_ICON}</a>`;
+  if(item.link4)icons+=`<a class="svc-link svc-gn" href="${esc(item.link4)}" target="_blank" rel="noopener" style="width:30px;height:30px;border-radius:8px">${GN_ICON}</a>`;
   icons+=`<button class="ic-memo has" onclick="openDet('${id}');closeMemo()" style="width:30px;height:30px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`;
   $('memo-pop-icons').innerHTML=icons;
   $('memo-pop').classList.add('show');document.body.style.overflow='hidden';
@@ -811,20 +839,20 @@ function openAdd(){
   const sel=$('a-cat');let o=S.categories.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
   o+='<option value="__new__">+ 新しいカテゴリー</option>';sel.innerHTML=o;
   $('a-ncf').style.display=S.categories.length===0?'block':'none';
-  if(!S.categories.length)sel.value='__new__';$('a-nc').value='';$('a-nm').value='';$('a-dt').value=todayStr();$('a-memo').value='';$('a-link').value='';if($('a-link2'))$('a-link2').value='';if($('a-link3'))$('a-link3').value='';
+  if(!S.categories.length)sel.value='__new__';$('a-nc').value='';$('a-nm').value='';$('a-dt').value=todayStr();$('a-memo').value='';$('a-link').value='';if($('a-link2'))$('a-link2').value='';if($('a-link3'))$('a-link3').value='';if($('a-link4'))$('a-link4').value='';if($('a-link5'))$('a-link5').value='';if($('a-link6'))$('a-link6').value='';if($('a-link7'))$('a-link7').value='';
   sel.onchange=()=>{$('a-ncf').style.display=sel.value==='__new__'?'block':'none'};
   showM('m-add');setTimeout(()=>$('a-nm').focus(),300);
 }
 function submitAdd(keepOpen){
   let cid=$('a-cat').value;const nm=$('a-nm').value.trim(),dt=$('a-dt').value;
-  const memo=$('a-memo').value.trim(),link=$('a-link').value.trim(),link2=$('a-link2')?$('a-link2').value.trim():'',link3=$('a-link3')?$('a-link3').value.trim():'';
+  const memo=$('a-memo').value.trim(),link=$('a-link').value.trim(),link2=$('a-link2')?$('a-link2').value.trim():'',link3=$('a-link3')?$('a-link3').value.trim():'',link4=$('a-link4')?$('a-link4').value.trim():'',link5=$('a-link5')?$('a-link5').value.trim():'',link6=$('a-link6')?$('a-link6').value.trim():'',link7=$('a-link7')?$('a-link7').value.trim():'';
   if(!nm||!dt)return;
   if(cid==='__new__'){const cn=$('a-nc').value.trim();if(!cn)return;const nc={id:uid(),name:cn,cc:CC[S.categories.length%CC.length]};S.categories.push(nc);cid=nc.id}
-  commit('項目追加');S.items.push({id:uid(),categoryId:cid,name:nm,learnDate:dt,doneDates:[],completions:[],notes:memo,link:link,link2:link2,link3:link3});
+  commit('項目追加');S.items.push({id:uid(),categoryId:cid,name:nm,learnDate:dt,doneDates:[],completions:[],notes:memo,link:link,link2:link2,link3:link3,link4:link4,link5:link5,link6:link6,link7:link7});
   save();render();
   if(keepOpen){
     // Clear name, memo, link but keep category and date
-    $('a-nm').value='';$('a-memo').value='';$('a-link').value='';if($('a-link2'))$('a-link2').value='';if($('a-link3'))$('a-link3').value='';
+    $('a-nm').value='';$('a-memo').value='';$('a-link').value='';if($('a-link2'))$('a-link2').value='';if($('a-link3'))$('a-link3').value='';if($('a-link4'))$('a-link4').value='';if($('a-link5'))$('a-link5').value='';if($('a-link6'))$('a-link6').value='';if($('a-link7'))$('a-link7').value='';
     $('a-nm').focus();
   }else{
     closeM(null,'m-add');
@@ -838,7 +866,7 @@ function openDet(id){
   opts+='<option value="__new__">+ 新しいカテゴリー</option>';$('d-cat').innerHTML=opts;
   $('d-ncf').style.display='none';$('d-nc').value='';
   $('d-cat').onchange=()=>{$('d-ncf').style.display=$('d-cat').value==='__new__'?'block':'none'};
-  $('d-nm').value=item.name;$('d-dt').value=item.learnDate;$('d-memo').value=item.notes||'';$('d-link').value=item.link||'';if($('d-link2'))$('d-link2').value=item.link2||'';if($('d-link3'))$('d-link3').value=item.link3||'';
+  $('d-nm').value=item.name;$('d-dt').value=item.learnDate;$('d-memo').value=item.notes||'';$('d-link').value=item.link||'';if($('d-link2'))$('d-link2').value=item.link2||'';if($('d-link3'))$('d-link3').value=item.link3||'';if($('d-link4'))$('d-link4').value=item.link4||'';if($('d-link5'))$('d-link5').value=item.link5||'';if($('d-link6'))$('d-link6').value=item.link6||'';if($('d-link7'))$('d-link7').value=item.link7||'';
   showM('m-det');
 }
 function saveDet(){
@@ -848,7 +876,7 @@ function saveDet(){
     const nc={id:uid(),name:cn,cc:CC[S.categories.length%CC.length]};S.categories.push(nc);catId=nc.id}
   item.categoryId=catId||item.categoryId;item.name=nm;
   const nd=$('d-dt').value;if(item.learnDate!==nd){item.learnDate=nd;item.doneDates=[];item.completions=[]}
-  item.notes=$('d-memo').value.trim();item.link=$('d-link').value.trim();item.link2=$('d-link2')?$('d-link2').value.trim():'';item.link3=$('d-link3')?$('d-link3').value.trim():'';
+  item.notes=$('d-memo').value.trim();item.link=$('d-link').value.trim();item.link2=$('d-link2')?$('d-link2').value.trim():'';item.link3=$('d-link3')?$('d-link3').value.trim():'';item.link4=$('d-link4')?$('d-link4').value.trim():'';item.link5=$('d-link5')?$('d-link5').value.trim():'';item.link6=$('d-link6')?$('d-link6').value.trim():'';item.link7=$('d-link7')?$('d-link7').value.trim():'';
   save();closeM(null,'m-det');render();
 }
 function markAllPast(){
@@ -868,7 +896,7 @@ function delItem(){const idx=S.items.findIndex(i=>i.id===detId);if(idx<0)return;
 const TPL=['1：宅地建物取引業の意味','2：免許制度','3：免許基準','4：宅地建物取引業者の手続き','5：宅地建物取引士制度','6：営業保証金','7：弁済業務保証金(保証協会)','8：取引の諸規定','9：媒介契約の規制','10：重要事項の説明','11：37条書面','12：8種規制','13：報酬','14：監督・罰則','15：住宅瑕疵担保履行法'];
 function loadTpl(){if(!confirm('宅建業法15項目を追加しますか?'))return;commit('テンプレート追加');let cat=S.categories.find(c=>c.name==='宅建業法');
   if(!cat){cat={id:uid(),name:'宅建業法',cc:CC[S.categories.length%CC.length]};S.categories.push(cat)}
-  const t=todayStr();TPL.forEach(n=>S.items.push({id:uid(),categoryId:cat.id,name:n,learnDate:t,doneDates:[],completions:[],notes:'',link:'',link2:'',link3:''}));save();closeM(null,'m-set');render()}
+  const t=todayStr();TPL.forEach(n=>S.items.push({id:uid(),categoryId:cat.id,name:n,learnDate:t,doneDates:[],completions:[],notes:'',link:'',link2:'',link3:'',link4:'',link5:'',link6:'',link7:''}));save();closeM(null,'m-set');render()}
 function expData(){const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`taliyo-${todayStr()}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a)}
 function impData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=ev=>{try{const p=JSON.parse(ev.target.result);if(!p.categories||!p.items)throw 0;
